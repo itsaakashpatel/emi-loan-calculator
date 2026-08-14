@@ -2,6 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { useHeaderAction } from '../src/components/Header';
 import { Screen } from '../src/components/Screen';
 import { NumberField } from '../src/components/inputs';
 import { Button, Card, Chip, Label } from '../src/components/primitives';
@@ -25,7 +26,7 @@ interface Row {
 const MAX_SCENARIOS = 3;
 
 export default function CompareScreen() {
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing } = useTheme();
   const currency = useCurrency();
   const input = useLoanInput();
 
@@ -63,6 +64,12 @@ export default function CompareScreen() {
   );
 
   const comparison = useMemo(() => compareLoans(scenarios), [scenarios]);
+
+  useHeaderAction({
+    icon: 'share-outline',
+    label: 'Export comparison as PDF',
+    onPress: () => void sharePdf(comparisonHtml(comparison, currency), 'loan-comparison'),
+  });
   const money = (value: number) => formatMoney(value, { currency });
 
   const update = (id: string, patch: Partial<Row>) =>
@@ -200,13 +207,6 @@ export default function CompareScreen() {
         </Card>
       ))}
 
-      <Button
-        label="Export comparison as PDF"
-        icon="document-text-outline"
-        variant="secondary"
-        onPress={() => void sharePdf(comparisonHtml(comparison, currency), 'loan-comparison')}
-        style={{ borderRadius: radius.md }}
-      />
     </Screen>
   );
 }
