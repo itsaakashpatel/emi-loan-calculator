@@ -142,7 +142,7 @@ const RATE_FIELD = (label: string, max = 30): FieldSpec => ({
 export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
   fd: {
     id: 'fd',
-    title: 'Fixed Deposit',
+    title: 'FD Calculator',
     short: 'FD',
     blurb: 'Maturity value of a one-off deposit',
     icon: 'lock-closed-outline',
@@ -200,7 +200,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
 
   rd: {
     id: 'rd',
-    title: 'Recurring Deposit',
+    title: 'RD Calculator',
     short: 'RD',
     blurb: 'Monthly deposits with quarterly compounding',
     icon: 'repeat-outline',
@@ -257,7 +257,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
 
   ppf: {
     id: 'ppf',
-    title: 'PPF',
+    title: 'PPF Calculator',
     short: 'PPF',
     blurb: 'Public Provident Fund, 15 years and beyond',
     icon: 'shield-checkmark-outline',
@@ -324,7 +324,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
 
   sip: {
     id: 'sip',
-    title: 'SIP',
+    title: 'SIP Calculator',
     short: 'SIP',
     blurb: 'Monthly investing, with optional step-up',
     icon: 'trending-up-outline',
@@ -397,7 +397,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
 
   lumpsum: {
     id: 'lumpsum',
-    title: 'Lumpsum',
+    title: 'Lumpsum Calculator',
     short: 'Lumpsum',
     blurb: 'One-off investment, compounded annually',
     icon: 'ellipse-outline',
@@ -448,7 +448,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
 
   swp: {
     id: 'swp',
-    title: 'SWP',
+    title: 'SWP Calculator',
     short: 'SWP',
     blurb: 'How long a corpus funds monthly withdrawals',
     icon: 'cash-outline',

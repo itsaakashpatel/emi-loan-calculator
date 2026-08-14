@@ -258,7 +258,9 @@ function CompareRow({
 }
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'flex-end', paddingBottom: 8 },
+  // flex-start, not flex-end: the "Cheapest" chip is taller than a bare column header, and
+  // bottom alignment pushed the other columns' labels out of line with it.
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', paddingBottom: 8 },
   compareRow: { flexDirection: 'row', alignItems: 'center' },
   labelCol: { width: 104 },
   valueCol: { width: 108 },

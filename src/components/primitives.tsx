@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import {
   Keyboard,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -360,6 +361,84 @@ export function ListRow({
   );
 }
 
+/* -------------------------------------------------------------- chip row ---- */
+
+export interface ChipOption<T extends string> {
+  value: T;
+  label: string;
+  /** Announced to VoiceOver in place of the short label. */
+  hint?: string;
+}
+
+interface SelectChipRowProps<T extends string> {
+  options: ReadonlyArray<ChipOption<T>>;
+  value: T;
+  onChange: (value: T) => void;
+  /** Horizontal padding of the container this row sits in — a `Card` uses `spacing.lg`. */
+  bleed?: number;
+}
+
+/**
+ * A single-select row of chips that scrolls horizontally.
+ *
+ * The scroll view is pulled out to the container's padding and puts that padding back on its
+ * content, so a chip that runs past the edge is cut at the card boundary rather than sliced in the
+ * middle of the card's inner margin — which read as a rendering fault.
+ */
+export function SelectChipRow<T extends string>({
+  options,
+  value,
+  onChange,
+  bleed,
+}: SelectChipRowProps<T>) {
+  const { colors, radius, spacing } = useTheme();
+  const inset = bleed ?? spacing.lg;
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ marginHorizontal: -inset }}
+      contentContainerStyle={[styles.chipRow, { paddingHorizontal: inset, gap: spacing.sm }]}
+    >
+      {options.map((option) => {
+        const active = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={option.hint ?? option.label}
+            onPress={() => {
+              if (!active) void Haptics.selectionAsync();
+              onChange(option.value);
+            }}
+            style={({ pressed }) => [
+              styles.chipItem,
+              {
+                backgroundColor: active ? colors.accent : colors.surfaceAlt,
+                borderRadius: radius.md,
+                paddingVertical: spacing.sm,
+                paddingHorizontal: spacing.md,
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <Label
+              size="caption"
+              weight={active ? 'semibold' : 'medium'}
+              numberOfLines={1}
+              style={{ color: active ? colors.onAccent : colors.textMuted }}
+            >
+              {option.label}
+            </Label>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
 /* ------------------------------------------------------------------ chip ---- */
 
 interface ChipProps {
@@ -459,6 +538,8 @@ const styles = StyleSheet.create({
   listIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   listRight: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 'auto' },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  chipRow: { flexDirection: 'row', alignItems: 'center' },
+  chipItem: { alignItems: 'center', justifyContent: 'center' },
   pillRow: { flexDirection: 'row' },
   pill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   empty: { alignItems: 'center', justifyContent: 'center' },

@@ -1,10 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
 import { NumberField } from '../../src/components/inputs';
-import { Button, Card, Chip, KeyValueRow, Label } from '../../src/components/primitives';
+import { Button, Card, Chip, KeyValueRow, Label, SelectChipRow } from '../../src/components/primitives';
 import { formatDate, toISO } from '../../src/lib/format/date';
 import { CURRENCIES, currencyTag, formatMoney } from '../../src/lib/format/money';
 import { convert, getRates, type RatesResult } from '../../src/lib/fx';
@@ -173,42 +173,19 @@ function CurrencyPicker({
       <Label size="caption" tone="muted" style={{ marginBottom: spacing.sm }}>
         {label}
       </Label>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pickerRow}>
-        {CURRENCIES.map((currency) => {
-          const active = currency.code === value;
-          return (
-            <Pressable
-              key={currency.code}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              accessibilityLabel={currency.name}
-              onPress={() => onChange(currency.code)}
-              style={({ pressed }) => [
-                {
-                  backgroundColor: active ? colors.accent : colors.surfaceAlt,
-                  borderRadius: radius.md,
-                  paddingVertical: spacing.sm,
-                  paddingHorizontal: spacing.md,
-                  opacity: pressed ? 0.7 : 1,
-                },
-              ]}
-            >
-              <Label
-                size="caption"
-                weight={active ? 'semibold' : 'medium'}
-                style={{ color: active ? colors.onAccent : colors.textMuted }}
-              >
-                {currency.code}
-              </Label>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <SelectChipRow
+        options={CURRENCIES.map((entry) => ({
+          value: entry.code,
+          label: entry.code,
+          hint: entry.name,
+        }))}
+        value={value}
+        onChange={onChange}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   swap: { alignSelf: 'center', width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  pickerRow: { flexDirection: 'row', gap: 8 },
 });

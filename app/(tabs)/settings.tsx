@@ -1,11 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { LargeTitleHeader } from '../../src/components/Header';
 import { Screen } from '../../src/components/Screen';
 import { NumberField, SegmentedControl } from '../../src/components/inputs';
-import { Button, Card, Label, ListRow } from '../../src/components/primitives';
+import { Button, Card, Label, ListRow, SelectChipRow } from '../../src/components/primitives';
 import { resetDatabase } from '../../src/db/client';
 import { COMPOUNDING_LABELS, type Compounding } from '../../src/lib/finance/deposits';
 import { CURRENCIES, currencyTag, formatMoney } from '../../src/lib/format/money';
@@ -61,38 +61,15 @@ export default function SettingsScreen() {
     <Screen floatingTabBar>
       <LargeTitleHeader title="Setting" />
       <Card title="Currency">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-          {CURRENCIES.map((option) => {
-            const active = option.code === currency;
-            return (
-              <Pressable
-                key={option.code}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                accessibilityLabel={option.name}
-                onPress={() => setCurrency(option.code)}
-                style={({ pressed }) => [
-                  {
-                    backgroundColor: active ? colors.accent : colors.surfaceAlt,
-                    borderRadius: radius.md,
-                    paddingVertical: spacing.sm,
-                    paddingHorizontal: spacing.md,
-                    opacity: pressed ? 0.7 : 1,
-                    alignItems: 'center',
-                  },
-                ]}
-              >
-                <Label
-                  size="caption"
-                  weight={active ? 'semibold' : 'medium'}
-                  style={{ color: active ? colors.onAccent : colors.textMuted }}
-                >
-                  {currencyTag(option.code)}
-                </Label>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <SelectChipRow
+          options={CURRENCIES.map((option) => ({
+            value: option.code,
+            label: currencyTag(option.code),
+            hint: option.name,
+          }))}
+          value={currency}
+          onChange={setCurrency}
+        />
         <Label size="micro" tone="faint" style={{ marginTop: spacing.md }}>
           Numbers are grouped {CURRENCIES.find((c) => c.code === currency)?.grouping === 'indian'
             ? 'the Indian way'
@@ -183,6 +160,5 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 8 },
   about: { alignItems: 'center' },
 });

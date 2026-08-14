@@ -131,6 +131,45 @@ export function thinLabelIndices(count: number, stride: number): number[] {
   return indices;
 }
 
+/**
+ * Drops any label that would still touch its neighbour after `xLabelPlacement` has clamped the
+ * edge ones inward.
+ *
+ * `labelStride` only reasons about the even bar pitch, so it cannot see that clamping the final
+ * label pulls it back towards its neighbour — which is how a 21-year schedule ended up drawing
+ * "2044" over "2046". This walks the real placements and resolves what is left.
+ *
+ * The last label is the one worth keeping (it carries the end of the range), so a collision at the
+ * tail drops the label before it instead.
+ */
+export function dropCollidingLabels(
+  candidates: readonly { index: number; x: number; anchor: TextAnchor }[],
+  labelWidth: number,
+  minSpacing = 4,
+): number[] {
+  if (candidates.length <= 1) return candidates.map((candidate) => candidate.index);
+
+  const left = (c: { x: number; anchor: TextAnchor }) =>
+    c.anchor === 'start' ? c.x : c.anchor === 'end' ? c.x - labelWidth : c.x - labelWidth / 2;
+  const right = (c: { x: number; anchor: TextAnchor }) => left(c) + labelWidth;
+
+  const kept = [candidates[0]!];
+  for (let i = 1; i < candidates.length; i += 1) {
+    const candidate = candidates[i]!;
+    const previous = kept[kept.length - 1]!;
+    if (left(candidate) >= right(previous) + minSpacing) {
+      kept.push(candidate);
+      continue;
+    }
+    // Only the final label outranks what precedes it, and never the very first one.
+    if (i === candidates.length - 1 && kept.length > 1) {
+      kept.pop();
+      kept.push(candidate);
+    }
+  }
+  return kept.map((candidate) => candidate.index);
+}
+
 export type TextAnchor = 'start' | 'middle' | 'end';
 
 /** Clamps an x-axis label so edge labels stay inside the SVG instead of being sliced off. */
@@ -431,7 +470,14 @@ export function StackedBarChart({
   const plotHeight = plotBottom - plotTop;
 
   const xLabelWidth = bars.reduce((widest, bar) => Math.max(widest, estimateTextWidth(bar.label, labelFontSize)), 0);
-  const shownLabels = new Set(thinLabelIndices(bars.length, labelStride(bars.length, layout.pitch, xLabelWidth)));
+  const candidateLabels = thinLabelIndices(
+    bars.length,
+    labelStride(bars.length, layout.pitch, xLabelWidth),
+  ).map((index) => ({
+    index,
+    ...xLabelPlacement(gutter + index * layout.pitch + layout.barWidth / 2, xLabelWidth, chartWidth),
+  }));
+  const shownLabels = new Set(dropCollidingLabels(candidateLabels, xLabelWidth));
 
   return (
     <View style={styles.chartFill} onLayout={onLayout}>

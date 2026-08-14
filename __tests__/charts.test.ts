@@ -5,6 +5,7 @@ import {
   axisGutter,
   computeBarLayout,
   donutSliceLabels,
+  dropCollidingLabels,
   estimateTextWidth,
   labelStride,
   sliceMidAngle,
@@ -259,5 +260,37 @@ describe('chart vertical padding', () => {
   it('reserves room above the top gridline for its label', () => {
     // The top tick sits at y = CHART_TOP_PAD with its baseline 3pt lower; a ~10pt glyph must clear 0.
     expect(CHART_TOP_PAD + 3 - 10).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('dropCollidingLabels', () => {
+  const anchorAt = (x: number, anchor: 'start' | 'middle' | 'end', index: number) => ({ index, x, anchor });
+
+  it('keeps labels that already clear one another', () => {
+    const kept = dropCollidingLabels(
+      [anchorAt(0, 'start', 0), anchorAt(60, 'middle', 1), anchorAt(120, 'middle', 2)],
+      24,
+    );
+    expect(kept).toEqual([0, 1, 2]);
+  });
+
+  it('drops the neighbour when the clamped final label overlaps it', () => {
+    // Reproduces the 21-year schedule: the last label is pulled left by the edge clamp, so its
+    // box runs into the one before it even though the stride said they would clear.
+    const kept = dropCollidingLabels(
+      [anchorAt(12, 'middle', 0), anchorAt(40, 'middle', 1), anchorAt(68, 'middle', 2), anchorAt(76, 'end', 3)],
+      24,
+    );
+    expect(kept).toEqual([0, 1, 3]);
+  });
+
+  it('never drops the first label', () => {
+    const kept = dropCollidingLabels([anchorAt(0, 'start', 0), anchorAt(6, 'end', 1)], 24);
+    expect(kept).toEqual([0]);
+  });
+
+  it('passes through zero or one candidate', () => {
+    expect(dropCollidingLabels([], 24)).toEqual([]);
+    expect(dropCollidingLabels([anchorAt(10, 'middle', 4)], 24)).toEqual([4]);
   });
 });

@@ -74,7 +74,7 @@ export default function LoansScreen() {
                 {formatMoney(totals.outstanding, { currency: active[0]!.loan.currency })}
               </Label>
             </View>
-            <View>
+            <View style={styles.totalsAside}>
               <Label size="caption" tone="muted" align="right">
                 Monthly
               </Label>
@@ -213,10 +213,13 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  totalsRow: { flexDirection: 'row', alignItems: 'flex-end' },
+  // flex-start keeps the two captions on one line. Bottom alignment lined up the boxes instead,
+  // which dropped the smaller "Monthly" caption well below "Total outstanding".
+  totalsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   typeIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
   cardStats: { flexDirection: 'row' },
   cardFooter: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
+  totalsAside: { flexShrink: 0, paddingTop: 2 },
   flex: { flex: 1 },
 });

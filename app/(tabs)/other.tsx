@@ -4,7 +4,7 @@ import { TileGrid, type TileSpec } from '../../src/components/Tile';
 
 const TILES: readonly TileSpec[] = [
   { href: '/tools/gst', icon: 'receipt-outline', label: 'GST\nCalculator' },
-  { href: '/tools/currency', icon: 'swap-horizontal-outline', label: 'Currency\nConverter' },
+  { href: '/tools/currency', icon: 'globe-outline', label: 'Currency\nConverter' },
 ];
 
 export default function OtherTab() {

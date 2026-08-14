@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../theme/ThemeProvider';
 import { Label } from './primitives';
@@ -20,34 +21,38 @@ export interface TileSpec {
 const COLUMNS = 3;
 
 /**
- * Grid of white tiles — the app's primary navigation. Rows are built explicitly rather than relying
- * on flex-wrap so a trailing partial row keeps the same tile width instead of stretching to fill.
+ * Grid of white tiles — the app's primary navigation.
+ *
+ * Tile width is measured from the container rather than left to flex. Flex distributes a partial
+ * row unevenly (a trailing row of two rendered 5pt wider per tile than the full rows above it),
+ * so every tile is given the same explicit width instead.
  */
 export function TileGrid({ tiles }: { tiles: readonly TileSpec[] }) {
   const { spacing } = useTheme();
+  const [gridWidth, setGridWidth] = useState(0);
+
+  const gap = spacing.md;
+  const tileWidth = gridWidth > 0 ? (gridWidth - gap * (COLUMNS - 1)) / COLUMNS : undefined;
+
   const rows: TileSpec[][] = [];
   for (let i = 0; i < tiles.length; i += COLUMNS) rows.push(tiles.slice(i, i + COLUMNS));
 
+  const onLayout = (event: LayoutChangeEvent) => setGridWidth(event.nativeEvent.layout.width);
+
   return (
-    <View style={{ gap: spacing.md }}>
+    <View style={{ gap }} onLayout={onLayout}>
       {rows.map((row, index) => (
-        <View key={index} style={[styles.row, { gap: spacing.md }]}>
+        <View key={index} style={[styles.row, { gap }]}>
           {row.map((tile) => (
-            <Tile key={tile.href} tile={tile} />
+            <Tile key={tile.href} tile={tile} width={tileWidth} />
           ))}
-          {/* Keep the last row's tiles at their natural width. */}
-          {row.length < COLUMNS
-            ? Array.from({ length: COLUMNS - row.length }, (_, i) => (
-                <View key={`filler-${i}`} style={styles.tile} />
-              ))
-            : null}
         </View>
       ))}
     </View>
   );
 }
 
-function Tile({ tile }: { tile: TileSpec }) {
+function Tile({ tile, width }: { tile: TileSpec; width: number | undefined }) {
   const router = useRouter();
   const { colors, radius, spacing } = useTheme();
 
@@ -61,6 +66,8 @@ function Tile({ tile }: { tile: TileSpec }) {
       }}
       style={({ pressed }) => [
         styles.tile,
+        // Before the first layout pass there is no measurement, so fall back to an even split.
+        width === undefined ? styles.tileFallback : { width },
         {
           backgroundColor: colors.surface,
           borderRadius: radius.xl,
@@ -72,9 +79,11 @@ function Tile({ tile }: { tile: TileSpec }) {
         styles.shadow,
       ]}
     >
-      {/* Fixed icon box so every tile's glyph gets the same breathing room. */}
-      <View style={styles.iconBox}>
-        <Ionicons name={tile.icon} size={30} color={colors.accent} />
+      {/* A tinted circle behind every glyph. Ionicons vary a lot in aspect ratio — a wide one such
+          as `infinite` reads much heavier than a narrow one such as `lock-closed` — and the circle
+          gives them all the same optical footprint. */}
+      <View style={[styles.iconBox, { backgroundColor: colors.iconWash }]}>
+        <Ionicons name={tile.icon} size={24} color={colors.accent} />
       </View>
       <Label size="caption" weight="medium" align="center" numberOfLines={2} style={styles.label}>
         {tile.label}
@@ -86,12 +95,19 @@ function Tile({ tile }: { tile: TileSpec }) {
 const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   tile: {
-    flex: 1,
     minHeight: 122,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconBox: { height: 46, width: 46, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  tileFallback: { flexGrow: 1, flexShrink: 1, flexBasis: 0 },
+  iconBox: {
+    height: 46,
+    width: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
   label: { lineHeight: 17 },
   shadow: {
     shadowColor: '#1B3A50',

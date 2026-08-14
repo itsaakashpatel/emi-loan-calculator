@@ -417,24 +417,26 @@ export function SliderRow({ min, max, step, value, onChange, minLabel, maxLabel 
 
   return (
     <View style={{ marginBottom: spacing.md }}>
-      <Slider
-        minimumValue={min}
-        maximumValue={max}
-        step={step}
-        value={Math.min(Math.max(value, min), max)}
-        onValueChange={(next) => {
-          onChange(next);
-          // One tick per ~5% of travel, so dragging feels responsive without buzzing constantly.
-          if (Math.abs(next - lastHaptic.current) >= (max - min) / 20) {
-            lastHaptic.current = next;
-            void Haptics.selectionAsync();
-          }
-        }}
-        minimumTrackTintColor={colors.accent}
-        maximumTrackTintColor={colors.track}
-        thumbTintColor={colors.accent}
-        style={styles.slider}
-      />
+      <View style={styles.sliderBar}>
+        <Slider
+          minimumValue={min}
+          maximumValue={max}
+          step={step}
+          value={Math.min(Math.max(value, min), max)}
+          onValueChange={(next) => {
+            onChange(next);
+            // One tick per ~5% of travel, so dragging feels responsive without buzzing constantly.
+            if (Math.abs(next - lastHaptic.current) >= (max - min) / 20) {
+              lastHaptic.current = next;
+              void Haptics.selectionAsync();
+            }
+          }}
+          minimumTrackTintColor={colors.accent}
+          maximumTrackTintColor={colors.track}
+          // No thumbTintColor: the system thumb stays visible against the accent-filled track.
+          style={styles.slider}
+        />
+      </View>
       {minLabel || maxLabel ? (
         <View style={styles.sliderLabels}>
           <Label size="micro" tone="faint">
@@ -743,7 +745,10 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   input: { flex: 1 },
-  slider: { height: 34 },
+  // The Slider itself is left unstyled. iOS 26 draws UISlider with a capsule thumb and gives it a
+  // native shadow; the wrapper reserves the vertical room instead of resizing the control.
+  slider: {},
+  sliderBar: { height: 34, justifyContent: 'center' },
   sliderLabels: { flexDirection: 'row', justifyContent: 'space-between' },
   segmentTrack: { flexDirection: 'row', gap: 2 },
   segment: { flex: 1, alignItems: 'center', justifyContent: 'center' },
