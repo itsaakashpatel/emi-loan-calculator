@@ -2,14 +2,12 @@ import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
-import { NumberField, SegmentedControl } from '../../src/components/inputs';
+import { NumberField, TenureField } from '../../src/components/inputs';
 import { Card, KeyValueRow, Label, SelectChipRow } from '../../src/components/primitives';
 import { calculateEligibility } from '../../src/lib/finance/emi';
-import { formatMoney, formatPercent } from '../../src/lib/format/money';
+import { formatMoney, formatPercent, formatTenure } from '../../src/lib/format/money';
 import { useCurrency, useSettingsStore } from '../../src/store/settings';
 import { useTheme } from '../../src/theme/ThemeProvider';
-
-type TenureUnit = 'years' | 'months';
 
 const FOIR_QUICK_PICKS = [40, 45, 50, 60] as const;
 
@@ -22,12 +20,7 @@ export default function EligibilityScreen() {
   const [foirPct, setFoirPct] = useState(45);
   const [existingEmis, setExistingEmis] = useState(0);
   const [annualRate, setAnnualRate] = useState(defaultRate || 9);
-  const [tenureUnit, setTenureUnit] = useState<TenureUnit>('years');
   const [tenureMonths, setTenureMonths] = useState(240);
-
-  const tenureValue = tenureUnit === 'years' ? Math.round(tenureMonths / 12) : tenureMonths;
-  const onTenureChange = (value: number) =>
-    setTenureMonths(tenureUnit === 'years' ? Math.round(value * 12) : Math.round(value));
 
   const result = useMemo(
     () => calculateEligibility({ monthlyIncome: income, foirPct, existingEmis, annualRate, tenureMonths }),
@@ -46,7 +39,7 @@ export default function EligibilityScreen() {
           {money(result.eligibleAmount)}
         </Label>
         <Label size="micro" tone="faint">
-          At {money(result.eligibleEmi)} EMI for {tenureUnit === 'years' ? `${tenureValue} yr` : `${tenureValue} mo`}
+          At {money(result.eligibleEmi)} EMI for {formatTenure(tenureMonths)}
           {' '}at {formatPercent(annualRate)}
         </Label>
       </Card>
@@ -100,23 +93,7 @@ export default function EligibilityScreen() {
           max={60}
         />
 
-        <SegmentedControl<TenureUnit>
-          label="Tenure"
-          segments={[
-            { value: 'years', label: 'Years' },
-            { value: 'months', label: 'Months' },
-          ]}
-          value={tenureUnit}
-          onChange={setTenureUnit}
-        />
-        <NumberField
-          label="Loan tenure"
-          value={tenureValue}
-          onChange={onTenureChange}
-          suffix={tenureUnit === 'years' ? 'yr' : 'mo'}
-          min={1}
-          max={tenureUnit === 'years' ? 40 : 480}
-        />
+        <TenureField label="Loan tenure" months={tenureMonths} onChange={setTenureMonths} />
       </Card>
 
       <Card title="Breakdown">

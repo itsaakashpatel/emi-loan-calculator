@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Keyboard } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
-import { RowField } from '../../src/components/inputs';
+import { RowField, TenureField } from '../../src/components/inputs';
 import { ActionButtons, Card, KeyValueRow, Label } from '../../src/components/primitives';
 import { amortize } from '../../src/lib/finance/emi';
 import { amountToWords, formatMoney, getCurrency } from '../../src/lib/format/money';
@@ -20,9 +20,8 @@ export default function QuickCalculatorScreen() {
 
   const [amount, setAmount] = useState(DEFAULT_AMOUNT);
   const [rate, setRate] = useState(defaultRate || 9);
-  const [periodYears, setPeriodYears] = useState(DEFAULT_PERIOD_YEARS);
+  const [tenureMonths, setTenureMonths] = useState(DEFAULT_PERIOD_YEARS * 12);
 
-  const tenureMonths = Math.max(1, Math.round(periodYears * 12));
   const result = useMemo(
     () => amortize({ principal: amount, annualRate: rate, tenureMonths }),
     [amount, rate, tenureMonths],
@@ -34,7 +33,7 @@ export default function QuickCalculatorScreen() {
   const reset = () => {
     setAmount(DEFAULT_AMOUNT);
     setRate(defaultRate || 9);
-    setPeriodYears(DEFAULT_PERIOD_YEARS);
+    setTenureMonths(DEFAULT_PERIOD_YEARS * 12);
   };
 
   return (
@@ -62,14 +61,7 @@ export default function QuickCalculatorScreen() {
           min={0}
           max={60}
         />
-        <RowField
-          label="Loan Period"
-          value={periodYears}
-          onChange={setPeriodYears}
-          suffix="yr"
-          min={1}
-          max={40}
-        />
+        <TenureField label="Loan Period" months={tenureMonths} onChange={setTenureMonths} compact />
         <ActionButtons onReset={reset} onCalculate={() => Keyboard.dismiss()} />
       </Card>
 

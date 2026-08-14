@@ -3,12 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, View } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
-import { DateField, NumberField, StepperField, TextField } from '../../src/components/inputs';
+import { DateField, NumberField, StepperField, TenureField, TextField } from '../../src/components/inputs';
 import { Button, Card, KeyValueRow, Label } from '../../src/components/primitives';
 import { draftFromLoan, type LoanDraft } from '../../src/db/loans';
 import { amortize } from '../../src/lib/finance/emi';
 import { todayISO } from '../../src/lib/format/date';
-import { formatMoney, formatTenure } from '../../src/lib/format/money';
+import { formatMoney } from '../../src/lib/format/money';
 import { LOAN_TYPES, useCalculatorStore, type LoanType } from '../../src/store/calculator';
 import { useLoansStore } from '../../src/store/loans';
 import { useCurrency } from '../../src/store/settings';
@@ -129,14 +129,10 @@ export default function LoanFormScreen() {
           min={0}
           max={60}
         />
-        <NumberField
+        <TenureField
           label="Tenure"
-          value={draft.tenureMonths}
-          onChange={(tenureMonths) => patch({ tenureMonths })}
-          suffix="mo"
-          hint={formatTenure(draft.tenureMonths)}
-          min={1}
-          max={480}
+          months={draft.tenureMonths}
+          onChange={(tenureMonths: number) => patch({ tenureMonths })}
         />
         <DateField
           label="Loan starts on"

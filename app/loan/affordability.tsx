@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Keyboard } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
-import { RowField } from '../../src/components/inputs';
+import { RowField, TenureField } from '../../src/components/inputs';
 import { ActionButtons, Card, KeyValueRow, Label } from '../../src/components/primitives';
 import { calculateAffordability } from '../../src/lib/finance/loan-tools';
 import { amountToWords, formatMoney, getCurrency } from '../../src/lib/format/money';
@@ -27,10 +27,9 @@ export default function AffordabilityScreen() {
   const [existingEmis, setExistingEmis] = useState(DEFAULTS.existingEmis);
   const [foirPct, setFoirPct] = useState(DEFAULTS.foirPct);
   const [annualRate, setAnnualRate] = useState(defaultRate || 9);
-  const [periodYears, setPeriodYears] = useState(DEFAULTS.periodYears);
+  const [tenureMonths, setTenureMonths] = useState(DEFAULTS.periodYears * 12);
   const [downPayment, setDownPayment] = useState(DEFAULTS.downPayment);
 
-  const tenureMonths = Math.max(1, Math.round(periodYears * 12));
   const result = useMemo(
     () => calculateAffordability({ monthlyIncome, foirPct, existingEmis, annualRate, tenureMonths, downPayment }),
     [monthlyIncome, foirPct, existingEmis, annualRate, tenureMonths, downPayment],
@@ -44,7 +43,7 @@ export default function AffordabilityScreen() {
     setExistingEmis(DEFAULTS.existingEmis);
     setFoirPct(DEFAULTS.foirPct);
     setAnnualRate(defaultRate || 9);
-    setPeriodYears(DEFAULTS.periodYears);
+    setTenureMonths(DEFAULTS.periodYears * 12);
     setDownPayment(DEFAULTS.downPayment);
   };
 
@@ -94,7 +93,7 @@ export default function AffordabilityScreen() {
           min={0}
           max={60}
         />
-        <RowField label="Loan Period" value={periodYears} onChange={setPeriodYears} suffix="yr" min={1} max={40} />
+        <TenureField label="Loan Period" months={tenureMonths} onChange={setTenureMonths} compact />
         <RowField
           label="Down Payment Available"
           value={downPayment}

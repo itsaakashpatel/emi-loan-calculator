@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useHeaderAction } from '../src/components/Header';
 import { Screen } from '../src/components/Screen';
-import { NumberField } from '../src/components/inputs';
+import { NumberField, TenureField } from '../src/components/inputs';
 import { Button, Card, Chip, Label } from '../src/components/primitives';
 import { compareLoans, type ComparisonScenario } from '../src/lib/finance/compare';
 import { formatMoney, formatTenure } from '../src/lib/format/money';
@@ -170,13 +170,10 @@ export default function CompareScreen() {
             min={0}
             max={60}
           />
-          <NumberField
+          <TenureField
             label="Tenure"
-            value={row.tenureYears}
-            onChange={(tenureYears) => update(row.id, { tenureYears })}
-            suffix="yr"
-            min={1}
-            max={40}
+            months={Math.round(row.tenureYears * 12)}
+            onChange={(months: number) => update(row.id, { tenureYears: months / 12 })}
           />
           <NumberField
             label="Processing fee"

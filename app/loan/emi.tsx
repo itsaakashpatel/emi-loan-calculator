@@ -8,8 +8,8 @@ import { saveCalculation } from '../../src/db/calculations';
 import { ChartLegend, DonutChart } from '../../src/components/charts';
 import { LoanTypeSelector } from '../../src/components/LoanTypeSelector';
 import { Screen } from '../../src/components/Screen';
-import { CompactField, DateField, SegmentedControl, StepperField } from '../../src/components/inputs';
-import { Button, Card, Chip, IconChip, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
+import { CompactField, DateField, SegmentedControl, StepperField, TenureField } from '../../src/components/inputs';
+import { Button, Card, Chip, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
 import {
   computeSavings,
   solveAnnualRate,
@@ -32,8 +32,6 @@ import {
 } from '../../src/store/calculator';
 import { useCurrency, useSettingsStore } from '../../src/store/settings';
 import { useTheme } from '../../src/theme/ThemeProvider';
-
-type TenureUnit = 'years' | 'months';
 
 export default function EmiCalculatorScreen() {
   const router = useRouter();
@@ -63,7 +61,6 @@ export default function EmiCalculatorScreen() {
   const setLoanType = useCalculatorStore((s) => s.setLoanType);
   const setSolveFor = useCalculatorStore((s) => s.setSolveFor);
 
-  const [tenureUnit, setTenureUnit] = useState<TenureUnit>('years');
   const [moreOpen, setMoreOpen] = useState(false);
 
   const money = (value: number) => formatMoney(value, { currency });
@@ -156,9 +153,6 @@ export default function EmiCalculatorScreen() {
     };
   }, [resolved, startDate, fees, advanceEmis]);
 
-  const tenureValue = tenureUnit === 'years' ? Math.round(tenureMonths / 12) : tenureMonths;
-  const onTenureChange = (value: number) =>
-    setTenureMonths(tenureUnit === 'years' ? Math.round(value * 12) : Math.round(value));
 
   const resetAll = () => {
     const { defaultRate, defaultTenureYears } = useSettingsStore.getState();
@@ -305,33 +299,13 @@ export default function EmiCalculatorScreen() {
         ) : null}
 
         {solveFor !== 'tenure' ? (
-          <CompactField
+          <TenureField
             label="Tenure"
-            value={tenureValue}
-            onChange={onTenureChange}
-            suffix={tenureUnit === 'years' ? 'Yr' : 'Mo'}
-            caption={tenureUnit === 'years' ? `${tenureMonths} months` : formatTenure(tenureMonths)}
-            min={1}
-            max={tenureUnit === 'years' ? 40 : 480}
-            resetKey={`${revision}-${tenureUnit}`}
-            trailing={
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Switch between years and months"
-                hitSlop={8}
-                onPress={() => setTenureUnit(tenureUnit === 'years' ? 'months' : 'years')}
-                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-              >
-                <IconChip icon="swap-horizontal" size="sm" />
-              </Pressable>
-            }
-            slider={{
-              min: 1,
-              max: tenureUnit === 'years' ? 40 : 360,
-              step: 1,
-              minLabel: tenureUnit === 'years' ? '1 yr' : '1 mo',
-              maxLabel: tenureUnit === 'years' ? '40 yr' : '360 mo',
-            }}
+            months={tenureMonths}
+            onChange={setTenureMonths}
+            resetKey={revision}
+            slider
+            compact
           />
         ) : null}
       </Card>

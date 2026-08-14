@@ -2,11 +2,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { formatDate, parseISO, toISO } from '../lib/format/date';
-import { formatNumber, getCurrency, parseNumber } from '../lib/format/money';
+import { formatNumber, formatTenure, getCurrency, parseNumber } from '../lib/format/money';
 import { useCurrency } from '../store/settings';
 import { useTheme } from '../theme/ThemeProvider';
 import { Label } from './primitives';
@@ -23,6 +23,10 @@ interface NumberFieldProps {
   decimals?: number;
   placeholder?: string;
   hint?: string;
+  /** Rendered at the right of the label row, where `hint` would otherwise sit. */
+  headerRight?: ReactNode;
+  /** Drop trailing zeros in the displayed value. */
+  trim?: boolean;
   /** Clamped on commit. */
   min?: number;
   max?: number;
@@ -39,6 +43,8 @@ export function NumberField({
   decimals = 0,
   placeholder,
   hint,
+  headerRight,
+  trim,
   min,
   max,
   resetKey,
@@ -59,7 +65,7 @@ export function NumberField({
     ? text
     : value === 0 && placeholder
       ? ''
-      : formatNumber(value, { decimals, grouping: getCurrency(currency).grouping });
+      : formatNumber(value, { decimals, trim, grouping: getCurrency(currency).grouping });
 
   const commit = () => {
     editing.current = false;
@@ -77,11 +83,11 @@ export function NumberField({
         <Label size="caption" tone="muted">
           {label}
         </Label>
-        {hint ? (
+        {headerRight ?? (hint ? (
           <Label size="micro" tone="faint">
             {hint}
           </Label>
-        ) : null}
+        ) : null)}
       </View>
       <View
         style={[
@@ -148,6 +154,8 @@ interface RowFieldProps {
   prefix?: 'currency' | string;
   suffix?: string;
   decimals?: number;
+  /** Drop trailing zeros in the displayed value. */
+  trim?: boolean;
   min?: number;
   max?: number;
   placeholder?: string;
@@ -167,6 +175,7 @@ export function RowField({
   prefix,
   suffix,
   decimals = 0,
+  trim,
   min,
   max,
   placeholder,
@@ -188,7 +197,7 @@ export function RowField({
     ? text
     : value === 0 && placeholder
       ? ''
-      : formatNumber(value, { decimals, grouping: getCurrency(currency).grouping });
+      : formatNumber(value, { decimals, trim, grouping: getCurrency(currency).grouping });
 
   const commit = () => {
     editing.current = false;
@@ -278,6 +287,8 @@ interface CompactFieldProps {
   slider?: { min: number; max: number; step: number; minLabel?: string; maxLabel?: string };
   /** Rendered to the right of the input, e.g. a Years/Months toggle. */
   trailing?: React.ReactNode;
+  /** Drop trailing zeros in the displayed value. */
+  trim?: boolean;
   resetKey?: number | string;
 }
 
@@ -297,6 +308,7 @@ export function CompactField({
   max,
   slider,
   trailing,
+  trim,
   resetKey,
 }: CompactFieldProps) {
   const { colors, radius, spacing, fontSize, fontWeight } = useTheme();
@@ -312,7 +324,7 @@ export function CompactField({
   const symbol = prefix === 'currency' ? getCurrency(currency).symbol : prefix;
   const display = focused
     ? text
-    : formatNumber(value, { decimals, grouping: getCurrency(currency).grouping });
+    : formatNumber(value, { decimals, trim, grouping: getCurrency(currency).grouping });
 
   const commit = () => {
     editing.current = false;
@@ -448,6 +460,142 @@ export function SliderRow({ min, max, step, value, onChange, minLabel, maxLabel 
         </View>
       ) : null}
     </View>
+  );
+}
+
+/* ---------------------------------------------------------- tenure field ---- */
+
+export type TenureUnit = 'years' | 'months';
+
+/** Two tiny segments that swap a period between years and months. */
+function UnitSwitch({ value, onChange }: { value: TenureUnit; onChange: (next: TenureUnit) => void }) {
+  const { colors, radius } = useTheme();
+  return (
+    <View style={[styles.unitSwitch, { backgroundColor: colors.surfaceSunken, borderRadius: radius.sm }]}>
+      {(['years', 'months'] as const).map((unit) => {
+        const active = unit === value;
+        return (
+          <Pressable
+            key={unit}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            accessibilityLabel={unit === 'years' ? 'Show the period in years' : 'Show the period in months'}
+            onPress={() => {
+              if (!active) void Haptics.selectionAsync();
+              onChange(unit);
+            }}
+            style={[
+              styles.unitSegment,
+              { backgroundColor: active ? colors.segmentActive : 'transparent', borderRadius: radius.sm - 1 },
+            ]}
+          >
+            <Label
+              size="micro"
+              weight={active ? 'semibold' : 'medium'}
+              tone={active ? 'default' : 'muted'}
+            >
+              {unit === 'years' ? 'Yr' : 'Mo'}
+            </Label>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+const MONTHS_MAX = 480;
+
+interface TenureFieldProps {
+  label: string;
+  /** Canonical value, always in months. */
+  months: number;
+  onChange: (months: number) => void;
+  minMonths?: number;
+  maxMonths?: number;
+  slider?: boolean;
+  /** Side-by-side label and input, instead of the label stacked above it. */
+  compact?: boolean;
+  resetKey?: number | string;
+}
+
+/**
+ * A period input with the years/months switch sitting in the field's own header row, rather than on
+ * a separate line above it. That is a whole row of vertical space saved on every screen that asks
+ * for a tenure.
+ *
+ * Years accept decimals: 3.5 years is 42 months exactly. A value that does not land on a whole
+ * month is rounded to the nearest one, and the caption always states the month count actually used,
+ * so the rounding is never hidden.
+ */
+export function TenureField({
+  label,
+  months,
+  onChange,
+  minMonths = 1,
+  maxMonths = MONTHS_MAX,
+  slider = false,
+  compact = false,
+  resetKey,
+}: TenureFieldProps) {
+  // Open in whatever unit describes the current value exactly, so a 42-month tenure does not
+  // present as "3.5" to someone who thinks in months.
+  const [unit, setUnit] = useState<TenureUnit>(months % 12 === 0 ? 'years' : 'months');
+
+  const toDisplay = (value: number) => (unit === 'years' ? value / 12 : value);
+  const toMonths = (value: number) => Math.round(unit === 'years' ? value * 12 : value);
+
+  const clamp = (value: number) => Math.min(maxMonths, Math.max(minMonths, value));
+  const commit = (value: number) => onChange(clamp(toMonths(value)));
+
+  const switchNode = <UnitSwitch value={unit} onChange={setUnit} />;
+  const caption = unit === 'years' ? `${months} months` : formatTenure(months);
+  const shared = {
+    label,
+    value: Number(toDisplay(months).toFixed(2)),
+    onChange: commit,
+    decimals: unit === 'years' ? 2 : 0,
+    trim: true,
+    min: toDisplay(minMonths),
+    max: toDisplay(maxMonths),
+    caption,
+    resetKey: `${resetKey ?? ''}-${unit}`,
+  };
+
+  if (compact) {
+    return (
+      <CompactField
+        {...shared}
+        trailing={switchNode}
+        {...(slider
+          ? {
+              slider: {
+                min: Math.max(1, Math.ceil(toDisplay(minMonths))),
+                max: Math.floor(toDisplay(maxMonths)),
+                step: 1,
+                minLabel: unit === 'years' ? '1 yr' : '1 mo',
+                maxLabel: unit === 'years' ? `${Math.floor(maxMonths / 12)} yr` : `${maxMonths} mo`,
+              },
+            }
+          : null)}
+      />
+    );
+  }
+
+  return (
+    <>
+      <NumberField {...shared} headerRight={switchNode} />
+      {slider ? (
+        <SliderRow
+          min={Math.max(1, Math.ceil(toDisplay(minMonths)))}
+          max={Math.floor(toDisplay(maxMonths))}
+          step={1}
+          value={Math.min(Math.max(toDisplay(months), toDisplay(minMonths)), toDisplay(maxMonths))}
+          onChange={commit}
+          minLabel={unit === 'years' ? '1 yr' : '1 mo'}
+          maxLabel={unit === 'years' ? `${Math.floor(maxMonths / 12)} yr` : `${maxMonths} mo`}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -750,6 +898,8 @@ const styles = StyleSheet.create({
   slider: {},
   sliderBar: { height: 34, justifyContent: 'center' },
   sliderLabels: { flexDirection: 'row', justifyContent: 'space-between' },
+  unitSwitch: { flexDirection: 'row', padding: 2, gap: 2 },
+  unitSegment: { paddingHorizontal: 8, paddingVertical: 3, alignItems: 'center', justifyContent: 'center' },
   segmentTrack: { flexDirection: 'row', gap: 2 },
   segment: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   spacer: { flex: 1 },

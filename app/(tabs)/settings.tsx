@@ -132,12 +132,7 @@ export default function SettingsScreen() {
           value={String(loanCount)}
           icon="wallet-outline"
         />
-        <ListRow
-          title="Storage"
-          subtitle="Everything is kept locally in SQLite on this device"
-          icon="phone-portrait-outline"
-          last
-        />
+        <ListRow title="Storage" value="On this device" icon="phone-portrait-outline" last />
       </Card>
 
       <Button label="Delete all saved data" variant="danger" icon="trash-outline" onPress={confirmClear} />

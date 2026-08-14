@@ -1,3 +1,5 @@
+import { CALCULATORS } from '../src/lib/finance/calculators';
+import { formatMoney, formatTenure } from '../src/lib/format/money';
 import { calculateLumpsum, calculateSip, calculateSwp } from '../src/lib/finance/sip';
 
 describe('SIP', () => {
@@ -105,5 +107,36 @@ describe('SWP', () => {
     const result = calculateSwp({ corpus: 100_000, monthlyWithdrawal: 10_000, annualRate: 0 });
     expect(result.monthsLasted).toBe(10);
     expect(result.totalWithdrawn).toBeCloseTo(100_000, 6);
+  });
+});
+
+describe('SWP calculator spec', () => {
+  const swp = CALCULATORS.swp;
+  const row = (result: ReturnType<typeof swp.compute>, label: string) =>
+    result.rows.find((entry) => entry.label === label)?.value;
+
+  it('reports totals over the stated period, not an open-ended horizon', () => {
+    // Growth (8% on 50 L = 33,333/month) exceeds the 30,000 withdrawal, so this plan never runs
+    // dry. It used to be projected to an arbitrary 600-month cutoff, which made "total withdrawn"
+    // report 600 x 30,000 while the headline claimed the corpus lasts indefinitely.
+    const result = swp.compute({ corpus: 5_000_000, withdrawal: 30_000, rate: 8, years: 10 }, 'INR');
+
+    expect(row(result, 'Total withdrawn')).toBe(formatMoney(30_000 * 120, { currency: 'INR' }));
+    expect(row(result, 'Withdrawals made')).toBe(formatTenure(120));
+    expect(result.headline.label).toBe('Balance after the period');
+  });
+
+  it('scales the totals with the period', () => {
+    const ten = swp.compute({ corpus: 5_000_000, withdrawal: 30_000, rate: 8, years: 10 }, 'INR');
+    const twenty = swp.compute({ corpus: 5_000_000, withdrawal: 30_000, rate: 8, years: 20 }, 'INR');
+    expect(row(ten, 'Total withdrawn')).not.toBe(row(twenty, 'Total withdrawn'));
+    expect(row(twenty, 'Withdrawals made')).toBe(formatTenure(240));
+  });
+
+  it('says when the corpus runs out inside the period', () => {
+    const result = swp.compute({ corpus: 1_000_000, withdrawal: 50_000, rate: 5, years: 20 }, 'INR');
+    expect(result.headline.label).toBe('Corpus runs out after');
+    // It cannot claim more months of withdrawals than the period allows.
+    expect(result.headline.value).not.toBe(formatTenure(240));
   });
 });
