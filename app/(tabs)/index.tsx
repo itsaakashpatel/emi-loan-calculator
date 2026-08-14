@@ -17,9 +17,10 @@ const TILES: readonly TileSpec[] = [
   { href: '/loans', icon: 'wallet-outline', label: 'Loan\nProfile', hint: 'Your saved loans' },
   { href: '/compare', icon: 'git-compare-outline', label: 'Compare\nLoans' },
   {
-    href: '/emi/advanced?tab=part_payment',
+    href: '/loan/revise',
     icon: 'cash-outline',
     label: 'Pre Payment\n/ ROI Change',
+    hint: 'Revised EMI and tenure after a lump sum or a rate change',
   },
   {
     href: '/emi/advanced?tab=moratorium',

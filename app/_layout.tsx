@@ -99,6 +99,7 @@ function AppStack() {
         <Stack.Screen name="loan/quick" options={{ title: 'Quick Calculator' }} />
         <Stack.Screen name="loan/affordability" options={{ title: 'Loan Affordability' }} />
         <Stack.Screen name="loan/refinance" options={{ title: 'Loan Refinance' }} />
+        <Stack.Screen name="loan/revise" options={{ title: 'Revised EMI and Tenure' }} />
         <Stack.Screen name="loans" options={{ title: 'Loan Profile' }} />
         <Stack.Screen name="emi/schedule" options={{ title: 'Amortisation Schedule' }} />
         <Stack.Screen name="emi/advanced" options={{ title: 'Advanced Options' }} />

@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
-import { NumberField, SegmentedControl, StepperField } from '../../src/components/inputs';
+import { NumberField, RowField, SegmentedControl, StepperField, TenureField } from '../../src/components/inputs';
 import { Button, Card, Chip, EmptyState, IconChip, KeyValueRow, Label } from '../../src/components/primitives';
 import { computeSavings } from '../../src/lib/finance/emi';
 import { addMonths, formatMonthYear } from '../../src/lib/format/date';
@@ -36,6 +36,15 @@ export default function AdvancedScreen() {
   const currency = useCurrency();
   const input = useLoanInput();
 
+  const principal = useCalculatorStore((s) => s.principal);
+  const setPrincipal = useCalculatorStore((s) => s.setPrincipal);
+  const annualRate = useCalculatorStore((s) => s.annualRate);
+  const setAnnualRate = useCalculatorStore((s) => s.setAnnualRate);
+  const tenureMonths = useCalculatorStore((s) => s.tenureMonths);
+  const setTenureMonths = useCalculatorStore((s) => s.setTenureMonths);
+  const fees = useCalculatorStore((s) => s.fees);
+  const setFees = useCalculatorStore((s) => s.setFees);
+  const revision = useCalculatorStore((s) => s.revision);
   const advanceEmis = useCalculatorStore((s) => s.advanceEmis);
   const setAdvanceEmis = useCalculatorStore((s) => s.setAdvanceEmis);
   const events = useCalculatorStore((s) => s.events);
@@ -68,6 +77,43 @@ export default function AdvancedScreen() {
           value={savings.interestSaved >= 0 ? money(savings.interestSaved) : `−${money(-savings.interestSaved)}`}
           tone={savings.interestSaved > 0 ? 'positive' : savings.interestSaved < 0 ? 'negative' : undefined}
           last
+        />
+      </Card>
+
+      <Card title="The loan">
+        <RowField
+          label="Loan Amount"
+          value={principal}
+          onChange={setPrincipal}
+          prefix="currency"
+          min={0}
+          resetKey={revision}
+        />
+        <RowField
+          label="Interest Rate"
+          value={annualRate}
+          onChange={setAnnualRate}
+          suffix="% p.a."
+          decimals={2}
+          min={0}
+          max={60}
+          resetKey={revision}
+        />
+        <TenureField
+          label="Period"
+          months={tenureMonths}
+          onChange={setTenureMonths}
+          resetKey={revision}
+          compact
+        />
+        <RowField
+          label="Processing Fees"
+          value={fees}
+          onChange={setFees}
+          prefix="currency"
+          min={0}
+          placeholder="Optional"
+          resetKey={revision}
         />
       </Card>
 
