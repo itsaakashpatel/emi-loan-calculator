@@ -111,6 +111,57 @@ export function Card({ children, title, action, padded = true, style }: CardProp
   );
 }
 
+/* ------------------------------------------------------------- icon chip ---- */
+
+/**
+ * Box and glyph sizes for `IconChip`. The glyph is about 55% of the box, which leaves every icon
+ * the same margin inside its circle regardless of how wide or narrow the glyph itself is.
+ */
+const ICON_CHIP_SIZES = {
+  sm: { box: 30, glyph: 16 },
+  md: { box: 34, glyph: 18 },
+  lg: { box: 46, glyph: 24 },
+} as const;
+
+export type IconChipSize = keyof typeof ICON_CHIP_SIZES;
+
+interface IconChipProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  size?: IconChipSize;
+  /** Overrides the glyph colour; the wash stays the same. */
+  tint?: string;
+  style?: StyleProp<ViewStyle>;
+}
+
+/**
+ * A tinted circle holding an icon — the app's single icon treatment.
+ *
+ * The circle is the point. Ionicons differ enormously in aspect ratio: at the same `size`, a wide
+ * glyph such as `infinite-outline` carries far more ink than a narrow one such as `lock-closed-
+ * outline`, so a row of them reads as ragged even when every glyph is perfectly centred. What the
+ * eye aligns on is the filled shape, so giving each glyph an identical filled circle is what makes
+ * a grid or a list look even. An invisible fixed-size box does nothing.
+ *
+ * Purely presentational. For a tappable chip, wrap it in a `Pressable` that carries only the press
+ * feedback, so the chip stays the one source of truth for the look.
+ */
+export function IconChip({ icon, size = 'md', tint, style }: IconChipProps) {
+  const { colors } = useTheme();
+  const { box, glyph } = ICON_CHIP_SIZES[size];
+
+  return (
+    <View
+      style={[
+        styles.iconChip,
+        { width: box, height: box, borderRadius: box / 2, backgroundColor: colors.iconWash },
+        style,
+      ]}
+    >
+      <Ionicons name={icon} size={glyph} color={tint ?? colors.accent} />
+    </View>
+  );
+}
+
 /* ------------------------------------------------------------------- row ---- */
 
 interface KeyValueRowProps {
@@ -303,7 +354,7 @@ export function ListRow({
   right,
   last,
 }: ListRowProps) {
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing } = useTheme();
   const content = (
     <View
       style={[
@@ -316,14 +367,7 @@ export function ListRow({
       ]}
     >
       {icon ? (
-        <View
-          style={[
-            styles.listIcon,
-            { backgroundColor: colors.accentSoft, borderRadius: radius.sm, marginRight: spacing.md },
-          ]}
-        >
-          <Ionicons name={icon} size={18} color={iconColor ?? colors.accent} />
-        </View>
+        <IconChip icon={icon} tint={iconColor} style={{ marginRight: spacing.md }} />
       ) : null}
       <View style={styles.flexShrink}>
         <Label size="body" weight="medium">
@@ -376,6 +420,11 @@ interface SelectChipRowProps<T extends string> {
   onChange: (value: T) => void;
   /** Horizontal padding of the container this row sits in — a `Card` uses `spacing.lg`. */
   bleed?: number;
+  /**
+   * Wrap onto several lines instead of scrolling. Use it when every option must be visible at once
+   * — a short, fixed set such as tax slabs — and scrolling would hide one behind the edge.
+   */
+  wrap?: boolean;
 }
 
 /**
@@ -390,9 +439,49 @@ export function SelectChipRow<T extends string>({
   value,
   onChange,
   bleed,
+  wrap = false,
 }: SelectChipRowProps<T>) {
   const { colors, radius, spacing } = useTheme();
   const inset = bleed ?? spacing.lg;
+
+  const chips = options.map((option) => {
+    const active = option.value === value;
+    return (
+      <Pressable
+        key={option.value}
+        accessibilityRole="button"
+        accessibilityState={{ selected: active }}
+        accessibilityLabel={option.hint ?? option.label}
+        onPress={() => {
+          if (!active) void Haptics.selectionAsync();
+          onChange(option.value);
+        }}
+        style={({ pressed }) => [
+          styles.chipItem,
+          {
+            backgroundColor: active ? colors.accent : colors.surfaceAlt,
+            borderRadius: radius.md,
+            paddingVertical: spacing.sm,
+            paddingHorizontal: spacing.md,
+            opacity: pressed ? 0.7 : 1,
+          },
+        ]}
+      >
+        <Label
+          size="caption"
+          weight={active ? 'semibold' : 'medium'}
+          numberOfLines={1}
+          style={{ color: active ? colors.onAccent : colors.textMuted }}
+        >
+          {option.label}
+        </Label>
+      </Pressable>
+    );
+  });
+
+  if (wrap) {
+    return <View style={[styles.chipWrap, { gap: spacing.sm }]}>{chips}</View>;
+  }
 
   return (
     <ScrollView
@@ -401,40 +490,7 @@ export function SelectChipRow<T extends string>({
       style={{ marginHorizontal: -inset }}
       contentContainerStyle={[styles.chipRow, { paddingHorizontal: inset, gap: spacing.sm }]}
     >
-      {options.map((option) => {
-        const active = option.value === value;
-        return (
-          <Pressable
-            key={option.value}
-            accessibilityRole="button"
-            accessibilityState={{ selected: active }}
-            accessibilityLabel={option.hint ?? option.label}
-            onPress={() => {
-              if (!active) void Haptics.selectionAsync();
-              onChange(option.value);
-            }}
-            style={({ pressed }) => [
-              styles.chipItem,
-              {
-                backgroundColor: active ? colors.accent : colors.surfaceAlt,
-                borderRadius: radius.md,
-                paddingVertical: spacing.sm,
-                paddingHorizontal: spacing.md,
-                opacity: pressed ? 0.7 : 1,
-              },
-            ]}
-          >
-            <Label
-              size="caption"
-              weight={active ? 'semibold' : 'medium'}
-              numberOfLines={1}
-              style={{ color: active ? colors.onAccent : colors.textMuted }}
-            >
-              {option.label}
-            </Label>
-          </Pressable>
-        );
-      })}
+      {chips}
     </ScrollView>
   );
 }
@@ -535,10 +591,11 @@ const styles = StyleSheet.create({
   flexShrink: { flexShrink: 1 },
   button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   listRow: { flexDirection: 'row', alignItems: 'center' },
-  listIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  iconChip: { alignItems: 'center', justifyContent: 'center' },
   listRight: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 'auto' },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   chipRow: { flexDirection: 'row', alignItems: 'center' },
+  chipWrap: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
   chipItem: { alignItems: 'center', justifyContent: 'center' },
   pillRow: { flexDirection: 'row' },
   pill: { flex: 1, alignItems: 'center', justifyContent: 'center' },

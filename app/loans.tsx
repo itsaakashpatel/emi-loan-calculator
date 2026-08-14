@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressRing } from '../src/components/charts';
 import { Screen } from '../src/components/Screen';
-import { Button, Card, Chip, EmptyState, Label } from '../src/components/primitives';
+import { Button, Card, Chip, EmptyState, IconChip, Label } from '../src/components/primitives';
 import { daysBetween, formatDate, todayISO } from '../src/lib/format/date';
 import { formatMoney, formatTenure } from '../src/lib/format/money';
 import { LOAN_TYPES } from '../src/store/calculator';
@@ -137,15 +137,7 @@ function LoanCard({ item, onPress }: { item: LoanWithProgress; onPress: () => vo
       ]}
     >
       <View style={styles.cardTop}>
-        <View
-          style={[styles.typeIcon, { backgroundColor: colors.accentSoft, borderRadius: radius.sm }]}
-        >
-          <Ionicons
-            name={(typeMeta?.icon ?? 'wallet-outline') as keyof typeof Ionicons.glyphMap}
-            size={18}
-            color={colors.accent}
-          />
-        </View>
+        <IconChip icon={(typeMeta?.icon ?? 'wallet-outline') as keyof typeof Ionicons.glyphMap} />
         <View style={styles.flex}>
           <Label size="body" weight="semibold" numberOfLines={1}>
             {loan.name}
@@ -217,7 +209,6 @@ const styles = StyleSheet.create({
   // which dropped the smaller "Monthly" caption well below "Total outstanding".
   totalsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  typeIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
   cardStats: { flexDirection: 'row' },
   cardFooter: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
   totalsAside: { flexShrink: 0, paddingTop: 2 },

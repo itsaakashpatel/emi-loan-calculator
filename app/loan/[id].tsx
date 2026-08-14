@@ -23,7 +23,7 @@ export default function LoanDetailScreen() {
   const loanId = Number(id);
   const router = useRouter();
   const navigation = useNavigation();
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing } = useTheme();
 
   const item = useLoansStore((s) => s.byId(loanId));
   const refresh = useLoansStore((s) => s.refresh);

@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
 import { NumberField, SegmentedControl } from '../../src/components/inputs';
-import { Card, KeyValueRow, Label } from '../../src/components/primitives';
+import { Card, KeyValueRow, Label, SelectChipRow } from '../../src/components/primitives';
 import { GST_SLABS, calculateGst, type GstMode, type GstSplit } from '../../src/lib/finance/gst';
 import { formatMoney, formatPercent } from '../../src/lib/format/money';
 import { useCurrency } from '../../src/store/settings';
 import { useTheme } from '../../src/theme/ThemeProvider';
 
 export default function GstScreen() {
-  const { colors, radius, spacing } = useTheme();
+  const { spacing } = useTheme();
   const currency = useCurrency();
 
   const [amount, setAmount] = useState(10_000);
@@ -59,36 +59,17 @@ export default function GstScreen() {
         <Label size="caption" tone="muted" style={{ marginBottom: spacing.sm }}>
           GST rate
         </Label>
-        <View style={[styles.slabRow, { gap: spacing.sm, marginBottom: spacing.md }]}>
-          {GST_SLABS.map((slab) => {
-            const active = slab === rate;
-            return (
-              <Pressable
-                key={slab}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                onPress={() => setRate(slab)}
-                style={({ pressed }) => [
-                  {
-                    backgroundColor: active ? colors.accent : colors.surfaceAlt,
-                    borderRadius: radius.sm,
-                    paddingVertical: spacing.sm,
-                    paddingHorizontal: spacing.md,
-                    opacity: pressed ? 0.7 : 1,
-                  },
-                ]}
-              >
-                <Label
-                  size="caption"
-                  weight={active ? 'semibold' : 'medium'}
-                  style={{ color: active ? colors.onAccent : colors.textMuted }}
-                >
-                  {slab}%
-                </Label>
-              </Pressable>
-            );
-          })}
-        </View>
+        <SelectChipRow
+          options={GST_SLABS.map((slab) => ({
+            value: String(slab),
+            label: `${slab}%`,
+            hint: `GST at ${slab} percent`,
+          }))}
+          value={String(rate)}
+          onChange={(next) => setRate(Number(next))}
+          wrap
+        />
+        <View style={{ height: spacing.md }} />
         <NumberField label="Custom rate" value={rate} onChange={setRate} suffix="%" decimals={2} min={0} max={100} />
 
         <SegmentedControl<GstSplit>
@@ -123,7 +104,3 @@ export default function GstScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  slabRow: { flexDirection: 'row', flexWrap: 'wrap' },
-});

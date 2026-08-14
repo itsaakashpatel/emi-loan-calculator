@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
 import { NumberField, SegmentedControl, StepperField } from '../../src/components/inputs';
-import { Button, Card, Chip, EmptyState, KeyValueRow, Label } from '../../src/components/primitives';
+import { Button, Card, Chip, EmptyState, IconChip, KeyValueRow, Label } from '../../src/components/primitives';
 import { computeSavings } from '../../src/lib/finance/emi';
 import { addMonths, formatMonthYear } from '../../src/lib/format/date';
 import { formatMoney, formatPercent, formatTenure } from '../../src/lib/format/money';
@@ -381,7 +381,7 @@ function EventRow({
   onRemove: () => void;
   last: boolean;
 }) {
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing } = useTheme();
   const { title, subtitle, icon } = describe(event, currency);
 
   return (
@@ -395,11 +395,7 @@ function EventRow({
         },
       ]}
     >
-      <View
-        style={[styles.eventIcon, { backgroundColor: colors.accentSoft, borderRadius: radius.sm }]}
-      >
-        <Ionicons name={icon} size={17} color={colors.accent} />
-      </View>
+      <IconChip icon={icon} />
       <View style={styles.flex}>
         <Label size="body" weight="medium">
           {title}
@@ -429,7 +425,6 @@ function EventRow({
 
 const styles = StyleSheet.create({
   eventRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  eventIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   eventMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   flex: { flex: 1 },
 });

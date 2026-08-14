@@ -499,7 +499,7 @@ export function SegmentedControl<T extends string>({
               style={[
                 styles.segment,
                 {
-                  backgroundColor: active ? colors.surface : 'transparent',
+                  backgroundColor: active ? colors.segmentActive : 'transparent',
                   borderRadius: radius.sm + 1,
                   paddingVertical: spacing.sm,
                 },

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, View } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
 import { DateField, NumberField, StepperField, TextField } from '../../src/components/inputs';
@@ -109,9 +109,7 @@ export default function LoanFormScreen() {
         <Label size="caption" tone="muted" style={{ marginBottom: spacing.sm }}>
           Type
         </Label>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typeRow}>
-          <LoanTypeSelector value={draft.type} onChange={(type: LoanType) => patch({ type })} />
-        </ScrollView>
+        <LoanTypeSelector value={draft.type} onChange={(type: LoanType) => patch({ type })} />
       </Card>
 
       <Card title="Terms">
@@ -181,7 +179,3 @@ export default function LoanFormScreen() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  typeRow: { flexDirection: 'row', gap: 8 },
-});

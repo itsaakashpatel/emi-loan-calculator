@@ -1,11 +1,11 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import type Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../theme/ThemeProvider';
-import { Label } from './primitives';
+import { IconChip, Label } from './primitives';
 
 export interface TileSpec {
   /** Route to push, e.g. `/loan/quick`. */
@@ -79,12 +79,7 @@ function Tile({ tile, width }: { tile: TileSpec; width: number | undefined }) {
         styles.shadow,
       ]}
     >
-      {/* A tinted circle behind every glyph. Ionicons vary a lot in aspect ratio — a wide one such
-          as `infinite` reads much heavier than a narrow one such as `lock-closed` — and the circle
-          gives them all the same optical footprint. */}
-      <View style={[styles.iconBox, { backgroundColor: colors.iconWash }]}>
-        <Ionicons name={tile.icon} size={24} color={colors.accent} />
-      </View>
+      <IconChip icon={tile.icon} size="lg" style={styles.iconBox} />
       <Label size="caption" weight="medium" align="center" numberOfLines={2} style={styles.label}>
         {tile.label}
       </Label>
@@ -100,14 +95,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tileFallback: { flexGrow: 1, flexShrink: 1, flexBasis: 0 },
-  iconBox: {
-    height: 46,
-    width: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
+  iconBox: { marginBottom: 10 },
   label: { lineHeight: 17 },
   shadow: {
     shadowColor: '#1B3A50',

@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { saveCalculation } from '../../src/db/calculations';
 
@@ -9,9 +9,8 @@ import { ChartLegend, DonutChart } from '../../src/components/charts';
 import { LoanTypeSelector } from '../../src/components/LoanTypeSelector';
 import { Screen } from '../../src/components/Screen';
 import { CompactField, DateField, SegmentedControl, StepperField } from '../../src/components/inputs';
-import { Button, Card, Chip, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
+import { Button, Card, Chip, IconChip, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
 import {
-  amortize,
   computeSavings,
   solveAnnualRate,
   solvePrincipal,
@@ -318,18 +317,12 @@ export default function EmiCalculatorScreen() {
             trailing={
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel={`Switch to ${tenureUnit === 'years' ? 'months' : 'years'}`}
+                accessibilityLabel="Switch between years and months"
+                hitSlop={8}
                 onPress={() => setTenureUnit(tenureUnit === 'years' ? 'months' : 'years')}
-                style={({ pressed }) => [
-                  styles.unitToggle,
-                  {
-                    backgroundColor: colors.accentSoft,
-                    borderRadius: radius.sm,
-                    opacity: pressed ? 0.6 : 1,
-                  },
-                ]}
+                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
               >
-                <Ionicons name="swap-horizontal" size={14} color={colors.accent} />
+                <IconChip icon="swap-horizontal" size="sm" />
               </Pressable>
             }
             slider={{
@@ -409,13 +402,7 @@ export default function EmiCalculatorScreen() {
             <Label size="caption" tone="muted" style={{ marginBottom: spacing.sm }}>
               Loan type
             </Label>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.typeRow}
-            >
-              <LoanTypeSelector value={loanType} onChange={setLoanType} />
-            </ScrollView>
+            <LoanTypeSelector value={loanType} onChange={setLoanType} />
             <View style={{ height: spacing.lg }} />
             <DateField label="Loan starts on" value={startDate} onChange={setStartDate} />
             <CompactField
@@ -456,8 +443,6 @@ function impliedRate(result: { schedule: Array<{ opening: number; interest: numb
 const styles = StyleSheet.create({
   headlineRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   flex: { flex: 1 },
-  typeRow: { flexDirection: 'row', gap: 8 },
-  unitToggle: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
   moreHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   moreSummary: { flexShrink: 1 },
   moreChevron: { marginLeft: 'auto' },

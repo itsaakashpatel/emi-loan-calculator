@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { LargeTitleHeader } from '../../src/components/Header';
 import { Screen } from '../../src/components/Screen';
@@ -17,7 +17,7 @@ import { useTheme } from '../../src/theme/ThemeProvider';
 const FD_COMPOUNDING: Compounding[] = ['monthly', 'quarterly', 'halfyearly', 'yearly'];
 
 export default function SettingsScreen() {
-  const { colors, radius, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
 
   const currency = useSettingsStore((s) => s.currency);
   const setCurrency = useSettingsStore((s) => s.setCurrency);

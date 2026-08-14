@@ -6,7 +6,7 @@ import { Screen } from '../src/components/Screen';
 import { NumberField } from '../src/components/inputs';
 import { Button, Card, Chip, Label } from '../src/components/primitives';
 import { compareLoans, type ComparisonScenario } from '../src/lib/finance/compare';
-import { formatMoney, formatPercent, formatTenure } from '../src/lib/format/money';
+import { formatMoney, formatTenure } from '../src/lib/format/money';
 import { comparisonHtml } from '../src/pdf/templates';
 import { sharePdf } from '../src/pdf/share';
 import { useLoanInput } from '../src/store/calculator';
