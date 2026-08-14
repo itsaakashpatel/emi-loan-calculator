@@ -9,10 +9,9 @@
  */
 
 import { computeEmi, fromMinor, monthlyRate, requiredMonths, solveAnnualRate, toMinor } from './emi';
+import type { InterestMethod } from './types';
 
 /* ------------------------------------------------------------ flat interest ---- */
-
-export type InterestMethod = 'reducing' | 'flat';
 
 export interface FlatEmiResult {
   emi: number;

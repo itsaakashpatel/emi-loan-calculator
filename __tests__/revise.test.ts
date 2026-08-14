@@ -1,4 +1,4 @@
-import { computeEmi } from '../src/lib/finance/emi';
+import { amortize, computeEmi } from '../src/lib/finance/emi';
 import { computeEmiBy, computeFlatEmi, reviseLoan } from '../src/lib/finance/revise';
 
 describe('computeFlatEmi', () => {
@@ -108,5 +108,58 @@ describe('reviseLoan', () => {
     const result = reviseLoan(running);
     expect(result.monthsSaved).toBe(0);
     expect(result.interestSavedKeepingEmi).toBeCloseTo(0, 6);
+  });
+});
+
+describe('amortize with a flat interest method', () => {
+  const loan = { principal: 100_000, annualRate: 10, tenureMonths: 24, startDate: '2026-01-01' };
+
+  it('charges the flat total and splits it evenly', () => {
+    const result = amortize({ ...loan, interestMethod: 'flat' });
+    expect(result.totalInterest).toBeCloseTo(20_000, 2);
+    expect(result.emi).toBeCloseTo(5_000, 2);
+    expect(result.tenureMonths).toBe(24);
+  });
+
+  it('repays principal in a straight line', () => {
+    const result = amortize({ ...loan, interestMethod: 'flat' });
+    const first = result.schedule[0]!;
+    const middle = result.schedule[11]!;
+    expect(first.principal).toBeCloseTo(middle.principal, 2);
+    expect(first.interest).toBeCloseTo(middle.interest, 2);
+    // A reducing loan front-loads interest; a flat one never does. The final instalment absorbs the
+    // rounding residual, so it is within a rupee rather than identical.
+    expect(result.schedule[22]!.interest).toBeCloseTo(first.interest, 2);
+    expect(Math.abs(result.schedule[23]!.interest - first.interest)).toBeLessThan(1);
+  });
+
+  it('balances exactly, with the last instalment absorbing the rounding', () => {
+    const result = amortize({ principal: 100_000, annualRate: 11, tenureMonths: 7, interestMethod: 'flat' });
+    const principalPaid = result.schedule.reduce((sum, row) => sum + row.principal, 0);
+    const interestPaid = result.schedule.reduce((sum, row) => sum + row.interest, 0);
+    expect(principalPaid).toBeCloseTo(100_000, 2);
+    expect(interestPaid).toBeCloseTo(result.totalInterest, 2);
+    expect(result.schedule[result.schedule.length - 1]!.closing).toBeCloseTo(0, 2);
+  });
+
+  it('costs more than the same rate reducing', () => {
+    const flat = amortize({ ...loan, interestMethod: 'flat' });
+    const reducing = amortize(loan);
+    expect(flat.totalInterest).toBeGreaterThan(reducing.totalInterest);
+  });
+
+  it('ignores adjustments, because a flat loan does not respond to them', () => {
+    const withPrepayment = amortize({
+      ...loan,
+      interestMethod: 'flat',
+      events: [{ kind: 'part_payment', startMonth: 6, amount: 50_000, frequency: 'once', mode: 'reduce_tenure' }],
+    });
+    const without = amortize({ ...loan, interestMethod: 'flat' });
+    expect(withPrepayment.totalInterest).toBeCloseTo(without.totalInterest, 2);
+    expect(withPrepayment.tenureMonths).toBe(without.tenureMonths);
+  });
+
+  it('defaults to reducing when no method is given', () => {
+    expect(amortize(loan).totalInterest).toBeCloseTo(amortize({ ...loan, interestMethod: 'reducing' }).totalInterest, 2);
   });
 });

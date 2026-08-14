@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 
 import { todayISO } from '../lib/format/date';
-import type { LoanEvent, LoanInput } from '../lib/finance/types';
+import type { InterestMethod, LoanEvent, LoanInput } from '../lib/finance/types';
 
 export type LoanType = 'home' | 'car' | 'personal' | 'business' | 'education' | 'gold' | 'other';
 
@@ -37,6 +37,8 @@ export interface CalculatorState {
   advanceEmis: number;
   fees: number;
   loanType: LoanType;
+  /** Reducing balance, or flat on the original amount. */
+  interestMethod: InterestMethod;
   events: LoanEvent[];
   solveFor: SolveFor;
   /** User-entered instalment, used when the unknown is something other than the EMI. */
@@ -51,6 +53,7 @@ export interface CalculatorState {
   setAdvanceEmis: (value: number) => void;
   setFees: (value: number) => void;
   setLoanType: (value: LoanType) => void;
+  setInterestMethod: (value: InterestMethod) => void;
   setSolveFor: (value: SolveFor) => void;
   setEmi: (value: number) => void;
   addEvent: (event: LoanEvent) => void;
@@ -70,6 +73,7 @@ const INITIAL = {
   advanceEmis: 0,
   fees: 0,
   loanType: 'home' as LoanType,
+  interestMethod: 'reducing' as InterestMethod,
   solveFor: 'emi' as SolveFor,
   emi: 10_000,
 };
@@ -87,6 +91,7 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
   setAdvanceEmis: (advanceEmis) => set({ advanceEmis: Math.max(0, Math.round(advanceEmis)) }),
   setFees: (fees) => set({ fees: Math.max(0, fees) }),
   setLoanType: (loanType) => set({ loanType }),
+  setInterestMethod: (interestMethod) => set({ interestMethod }),
   setSolveFor: (solveFor) => set({ solveFor }),
   setEmi: (emi) => set({ emi: Math.max(0, emi) }),
 
@@ -125,6 +130,7 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
       startDate: s.startDate,
       advanceEmis: s.advanceEmis,
       fees: s.fees,
+      interestMethod: s.interestMethod,
       events: s.events,
     };
   },
@@ -143,6 +149,7 @@ export function useLoanInput(): LoanInput {
       startDate: s.startDate,
       advanceEmis: s.advanceEmis,
       fees: s.fees,
+      interestMethod: s.interestMethod,
       events: s.events,
     })),
   );
