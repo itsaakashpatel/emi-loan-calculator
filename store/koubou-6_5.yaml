@@ -1,0 +1,147 @@
+project:
+  name: Loan EMI & SIP Calculator
+  device: iPhone 16 Pro - Black Titanium - Portrait
+  output_dir: screenshots/framed-6_5
+  output_size: iPhone6_5
+
+defaults:
+  background:
+    type: linear
+    direction: 180
+    colors:
+      - '#CFE3F2'
+      - '#F7FBFD'
+
+screenshots:
+  01-emi:
+    content:
+      - type: text
+        content: Know your EMI in seconds
+        position: ['50%', '5.5%']
+        size: 66
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: See exactly how much is interest
+        position: ['50%', '10.5%']
+        size: 34
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/01-emi.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  02-tracker:
+    content:
+      - type: text
+        content: Track every instalment
+        position: ['50%', '5.5%']
+        size: 66
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: Mark each payment as it is paid
+        position: ['50%', '10.5%']
+        size: 34
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/02-tracker.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  03-compare:
+    content:
+      - type: text
+        content: Compare two offers
+        position: ['50%', '5.5%']
+        size: 66
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: Processing fees counted in the total
+        position: ['50%', '10.5%']
+        size: 34
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/03-compare.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  04-schedule:
+    content:
+      - type: text
+        content: The full schedule
+        position: ['50%', '5.5%']
+        size: 66
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: Month by month, and export a PDF
+        position: ['50%', '10.5%']
+        size: 34
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/04-schedule.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  05-tools:
+    content:
+      - type: text
+        content: Everyday tools
+        position: ['50%', '5.5%']
+        size: 66
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: GST, tips, discounts, fuel and dates
+        position: ['50%', '10.5%']
+        size: 34
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/05-tools.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  06-currency:
+    content:
+      - type: text
+        content: Your currency, your defaults
+        position: ['50%', '5.5%']
+        size: 66
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: INR, USD, EUR, GBP, CAD and more
+        position: ['50%', '10.5%']
+        size: 34
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/06-currency.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  07-all:
+    content:
+      - type: text
+        content: Every calculator in one app
+        position: ['50%', '5.5%']
+        size: 66
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: No account. No ads. Nothing leaves the phone.
+        position: ['50%', '10.5%']
+        size: 32
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/07-all.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84

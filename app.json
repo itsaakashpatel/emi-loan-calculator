@@ -12,6 +12,11 @@
     ],
     "ios": {
       "supportsTablet": false,
+      "icon": {
+        "light": "./assets/images/icon.png",
+        "dark": "./assets/images/icon-dark.png",
+        "tinted": "./assets/images/icon-tinted.png"
+      },
       "bundleIdentifier": "com.aakashpatel.emicalculator",
       "buildNumber": "1",
       "infoPlist": {
