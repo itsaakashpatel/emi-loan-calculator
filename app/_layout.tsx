@@ -99,6 +99,7 @@ function AppStack() {
         <Stack.Screen name="loan/quick" options={{ title: 'Quick Calculator' }} />
         <Stack.Screen name="loan/affordability" options={{ title: 'Loan Affordability' }} />
         <Stack.Screen name="loan/refinance" options={{ title: 'Loan Refinance' }} />
+        <Stack.Screen name="loan/revise" options={{ title: 'Revised EMI and Tenure' }} />
         <Stack.Screen name="loans" options={{ title: 'Loan Profile' }} />
         <Stack.Screen name="emi/schedule" options={{ title: 'Amortisation Schedule' }} />
         <Stack.Screen name="emi/advanced" options={{ title: 'Advanced Options' }} />
@@ -109,6 +110,12 @@ function AppStack() {
         <Stack.Screen name="tools/gst" options={{ title: 'GST Calculator' }} />
         <Stack.Screen name="tools/currency" options={{ title: 'Currency Converter' }} />
         <Stack.Screen name="tools/eligibility" options={{ title: 'Loan Eligibility' }} />
+        <Stack.Screen name="tools/date-diff" options={{ title: 'Date Difference' }} />
+        <Stack.Screen name="tools/age" options={{ title: 'Age Calculator' }} />
+        <Stack.Screen name="tools/discount" options={{ title: 'Discount Calculator' }} />
+        <Stack.Screen name="tools/percentage" options={{ title: 'Percentage Calculator' }} />
+        <Stack.Screen name="tools/tip" options={{ title: 'Tip & Split' }} />
+        <Stack.Screen name="tools/fuel" options={{ title: 'Fuel Cost' }} />
         <Stack.Screen name="history" options={{ title: 'History' }} />
       </Stack>
       </NavThemeProvider>

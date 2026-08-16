@@ -142,7 +142,7 @@ const RATE_FIELD = (label: string, max = 30): FieldSpec => ({
 export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
   fd: {
     id: 'fd',
-    title: 'Fixed Deposit',
+    title: 'FD Calculator',
     short: 'FD',
     blurb: 'Maturity value of a one-off deposit',
     icon: 'lock-closed-outline',
@@ -200,7 +200,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
 
   rd: {
     id: 'rd',
-    title: 'Recurring Deposit',
+    title: 'RD Calculator',
     short: 'RD',
     blurb: 'Monthly deposits with quarterly compounding',
     icon: 'repeat-outline',
@@ -257,7 +257,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
 
   ppf: {
     id: 'ppf',
-    title: 'PPF',
+    title: 'PPF Calculator',
     short: 'PPF',
     blurb: 'Public Provident Fund, 15 years and beyond',
     icon: 'shield-checkmark-outline',
@@ -324,7 +324,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
 
   sip: {
     id: 'sip',
-    title: 'SIP',
+    title: 'SIP Calculator',
     short: 'SIP',
     blurb: 'Monthly investing, with optional step-up',
     icon: 'trending-up-outline',
@@ -397,7 +397,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
 
   lumpsum: {
     id: 'lumpsum',
-    title: 'Lumpsum',
+    title: 'Lumpsum Calculator',
     short: 'Lumpsum',
     blurb: 'One-off investment, compounded annually',
     icon: 'ellipse-outline',
@@ -448,7 +448,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
 
   swp: {
     id: 'swp',
-    title: 'SWP',
+    title: 'SWP Calculator',
     short: 'SWP',
     blurb: 'How long a corpus funds monthly withdrawals',
     icon: 'cash-outline',
@@ -456,13 +456,16 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
       { key: 'corpus', label: 'Total investment', kind: 'money', min: 0, max: 100_000_000, step: 50_000, slider: true },
       { key: 'withdrawal', label: 'Monthly withdrawal', kind: 'money', min: 0, max: 1_000_000, step: 1_000, slider: true },
       { key: 'rate', label: 'Expected return', kind: 'rate', min: 0, max: 40, step: 0.5, slider: true },
+      { key: 'years', label: 'Time period', kind: 'years', min: 1, max: 40, step: 1, slider: true },
     ],
-    defaults: { corpus: 5_000_000, withdrawal: 30_000, rate: 8 },
+    defaults: { corpus: 5_000_000, withdrawal: 30_000, rate: 8, years: 20 },
     compute: (values, currency) => {
+      const years = num(values, 'years');
       const result = calculateSwp({
         corpus: num(values, 'corpus'),
         monthlyWithdrawal: num(values, 'withdrawal'),
         annualRate: num(values, 'rate'),
+        months: Math.max(1, Math.round(years * 12)),
       });
       const money = (v: number) => formatMoney(v, { currency });
       const yearly: Array<{ label: string; invested: number; value: number }> = [];
@@ -471,10 +474,14 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
         yearly.push({ label: `Y${Math.ceil(row.month / 12)}`, invested: 0, value: row.closing });
       }
 
+      // The corpus either survives the chosen period or runs dry inside it. Everything below is
+      // reported over that stated period, never over an open-ended horizon.
+      const lastedFullPeriod = result.monthsLasted >= Math.max(1, Math.round(years * 12));
+
       return {
         headline: {
-          label: result.sustainable ? 'Withdrawals are sustainable' : 'Corpus lasts',
-          value: result.sustainable ? 'Indefinitely' : formatTenure(result.monthsLasted),
+          label: lastedFullPeriod ? 'Balance after the period' : 'Corpus runs out after',
+          value: lastedFullPeriod ? money(result.finalBalance) : formatTenure(result.monthsLasted),
           caption: `${money(num(values, 'withdrawal'))}/month from ${money(result.corpus)} at ${formatPercent(
             num(values, 'rate'),
           )}`,
@@ -487,7 +494,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
           { label: 'Starting corpus', value: money(result.corpus), swatch: 'invested' },
           { label: 'Growth over the period', value: money(result.totalGrowth), tone: 'positive', swatch: 'gain' },
           { label: 'Total withdrawn', value: money(result.totalWithdrawn) },
-          { label: 'Months of withdrawals', value: String(result.monthsLasted) },
+          { label: 'Withdrawals made', value: formatTenure(result.monthsLasted) },
           { label: 'Balance left', value: money(result.finalBalance), emphasis: true },
         ],
         chart: yearly,
@@ -503,7 +510,7 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
             ]),
         },
         note: result.sustainable
-          ? 'Monthly growth exceeds the withdrawal, so the corpus keeps growing. Projected for 50 years.'
+          ? 'Monthly growth exceeds the withdrawal, so the corpus grows even while you withdraw. Withdrawals are taken at month end, after that month growth is credited.'
           : 'Withdrawals are taken at month end, after that month growth is credited. Capital gains tax on each redemption is not modelled.',
       };
     },

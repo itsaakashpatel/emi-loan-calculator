@@ -5,9 +5,10 @@ import { StyleSheet, View } from 'react-native';
 import { ChartLegend, DonutChart, StackedBarChart } from '../../src/components/charts';
 import { DataTable, type DataTableColumn } from '../../src/components/DataTable';
 import { saveCalculation } from '../../src/db/calculations';
+import { useHeaderAction } from '../../src/components/Header';
 import { Screen } from '../../src/components/Screen';
 import { NumberField, SegmentedControl, SliderRow } from '../../src/components/inputs';
-import { Button, Card, EmptyState, KeyValueRow, Label } from '../../src/components/primitives';
+import { Card, EmptyState, KeyValueRow, Label } from '../../src/components/primitives';
 import {
   CALCULATORS,
   isCalculatorId,
@@ -54,6 +55,26 @@ export default function InvestmentCalculatorScreen() {
   }, [spec]);
 
   const result = useMemo(() => (spec ? spec.compute(values, currency) : null), [spec, values, currency]);
+
+  useHeaderAction({
+    icon: 'share-outline',
+    label: 'Export as PDF',
+    enabled: Boolean(spec && result),
+    onPress: () => {
+      if (!spec || !result) return;
+      void sharePdf(
+        investmentHtml({
+          title: spec.title,
+          subtitle: result.headline.caption,
+          headline: result.headline,
+          facts: result.rows.map((row) => [row.label, row.value] as [string, string]),
+          table: result.table,
+          ...(result.note ? { note: result.note } : null),
+        }),
+        `${spec.id}-calculation`,
+      );
+    },
+  });
 
   // Record in History once the user stops adjusting, so a slider drag is one entry rather than many.
   useEffect(() => {
@@ -211,24 +232,6 @@ export default function InvestmentCalculatorScreen() {
         </Label>
       ) : null}
 
-      <Button
-        label="Export as PDF"
-        icon="document-text-outline"
-        variant="secondary"
-        onPress={() =>
-          void sharePdf(
-            investmentHtml({
-              title: spec.title,
-              subtitle: result.headline.caption,
-              headline: result.headline,
-              facts: result.rows.map((row) => [row.label, row.value] as [string, string]),
-              table: result.table,
-              ...(result.note ? { note: result.note } : null),
-            }),
-            `${spec.id}-calculation`,
-          )
-        }
-      />
     </Screen>
   );
 }

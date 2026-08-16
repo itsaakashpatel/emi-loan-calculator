@@ -1,0 +1,143 @@
+{
+  "generated_at": "2026-08-15T20:08:14Z",
+  "raw_dir": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/raw",
+  "framed_dir": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/framed",
+  "output_dir": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/review",
+  "approval_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/review/approved.json",
+  "summary": {
+    "total": 7,
+    "ready": 7,
+    "missing_raw": 0,
+    "invalid_size": 0,
+    "approved": 0,
+    "pending_approval": 7
+  },
+  "entries": [
+    {
+      "key": "|iPhone_16_Pro_-_Black_Titanium_-_Portrait|01-emi",
+      "screenshot_id": "01-emi",
+      "device": "iPhone_16_Pro_-_Black_Titanium_-_Portrait",
+      "framed_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/framed/iPhone_16_Pro_-_Black_Titanium_-_Portrait/01-emi.png",
+      "framed_relative_path": "iPhone_16_Pro_-_Black_Titanium_-_Portrait/01-emi.png",
+      "raw_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/raw/01-emi.png",
+      "raw_relative_path": "01-emi.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|iPhone_16_Pro_-_Black_Titanium_-_Portrait|02-tracker",
+      "screenshot_id": "02-tracker",
+      "device": "iPhone_16_Pro_-_Black_Titanium_-_Portrait",
+      "framed_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/framed/iPhone_16_Pro_-_Black_Titanium_-_Portrait/02-tracker.png",
+      "framed_relative_path": "iPhone_16_Pro_-_Black_Titanium_-_Portrait/02-tracker.png",
+      "raw_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/raw/02-tracker.png",
+      "raw_relative_path": "02-tracker.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|iPhone_16_Pro_-_Black_Titanium_-_Portrait|03-compare",
+      "screenshot_id": "03-compare",
+      "device": "iPhone_16_Pro_-_Black_Titanium_-_Portrait",
+      "framed_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/framed/iPhone_16_Pro_-_Black_Titanium_-_Portrait/03-compare.png",
+      "framed_relative_path": "iPhone_16_Pro_-_Black_Titanium_-_Portrait/03-compare.png",
+      "raw_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/raw/03-compare.png",
+      "raw_relative_path": "03-compare.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|iPhone_16_Pro_-_Black_Titanium_-_Portrait|04-schedule",
+      "screenshot_id": "04-schedule",
+      "device": "iPhone_16_Pro_-_Black_Titanium_-_Portrait",
+      "framed_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/framed/iPhone_16_Pro_-_Black_Titanium_-_Portrait/04-schedule.png",
+      "framed_relative_path": "iPhone_16_Pro_-_Black_Titanium_-_Portrait/04-schedule.png",
+      "raw_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/raw/04-schedule.png",
+      "raw_relative_path": "04-schedule.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|iPhone_16_Pro_-_Black_Titanium_-_Portrait|05-tools",
+      "screenshot_id": "05-tools",
+      "device": "iPhone_16_Pro_-_Black_Titanium_-_Portrait",
+      "framed_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/framed/iPhone_16_Pro_-_Black_Titanium_-_Portrait/05-tools.png",
+      "framed_relative_path": "iPhone_16_Pro_-_Black_Titanium_-_Portrait/05-tools.png",
+      "raw_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/raw/05-tools.png",
+      "raw_relative_path": "05-tools.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|iPhone_16_Pro_-_Black_Titanium_-_Portrait|06-currency",
+      "screenshot_id": "06-currency",
+      "device": "iPhone_16_Pro_-_Black_Titanium_-_Portrait",
+      "framed_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/framed/iPhone_16_Pro_-_Black_Titanium_-_Portrait/06-currency.png",
+      "framed_relative_path": "iPhone_16_Pro_-_Black_Titanium_-_Portrait/06-currency.png",
+      "raw_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/raw/06-currency.png",
+      "raw_relative_path": "06-currency.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    },
+    {
+      "key": "|iPhone_16_Pro_-_Black_Titanium_-_Portrait|07-all",
+      "screenshot_id": "07-all",
+      "device": "iPhone_16_Pro_-_Black_Titanium_-_Portrait",
+      "framed_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/framed/iPhone_16_Pro_-_Black_Titanium_-_Portrait/07-all.png",
+      "framed_relative_path": "iPhone_16_Pro_-_Black_Titanium_-_Portrait/07-all.png",
+      "raw_path": "/Users/ak/Workspace/Projects/emi-loan-calculator/store/screenshots/raw/07-all.png",
+      "raw_relative_path": "07-all.png",
+      "width": 1320,
+      "height": 2868,
+      "display_types": [
+        "APP_IPHONE_67"
+      ],
+      "valid_app_store_size": true,
+      "status": "ready",
+      "approved": false,
+      "approval_state": "pending"
+    }
+  ]
+}

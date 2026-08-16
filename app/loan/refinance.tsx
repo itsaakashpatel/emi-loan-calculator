@@ -3,7 +3,7 @@ import { Keyboard } from 'react-native';
 
 import { DataTable } from '../../src/components/DataTable';
 import { Screen } from '../../src/components/Screen';
-import { RowField } from '../../src/components/inputs';
+import { RowField, TenureField } from '../../src/components/inputs';
 import { ActionButtons, Card, Label } from '../../src/components/primitives';
 import { calculateRefinance } from '../../src/lib/finance/loan-tools';
 import { currencyTag, formatMoney, formatNumber, getCurrency } from '../../src/lib/format/money';
@@ -27,9 +27,9 @@ export default function RefinanceScreen() {
 
   const [outstandingPrincipal, setOutstandingPrincipal] = useState(DEFAULTS.outstandingPrincipal);
   const [existingRate, setExistingRate] = useState(DEFAULTS.existingRate);
-  const [existingYears, setExistingYears] = useState(DEFAULTS.existingYears);
+  const [existingMonths, setExistingMonths] = useState(DEFAULTS.existingYears * 12);
   const [newRate, setNewRate] = useState(defaultRate || DEFAULTS.newRate);
-  const [newYears, setNewYears] = useState(DEFAULTS.newYears);
+  const [newMonths, setNewMonths] = useState(DEFAULTS.newYears * 12);
   const [switchingCost, setSwitchingCost] = useState(DEFAULTS.switchingCost);
 
   const result = useMemo(
@@ -37,12 +37,12 @@ export default function RefinanceScreen() {
       calculateRefinance({
         outstandingPrincipal,
         existingAnnualRate: existingRate,
-        existingTenureMonths: Math.max(1, Math.round(existingYears * 12)),
+        existingTenureMonths: Math.max(1, Math.round(existingMonths)),
         newAnnualRate: newRate,
-        newTenureMonths: Math.max(1, Math.round(newYears * 12)),
+        newTenureMonths: Math.max(1, Math.round(newMonths)),
         switchingCost,
       }),
-    [outstandingPrincipal, existingRate, existingYears, newRate, newYears, switchingCost],
+    [outstandingPrincipal, existingRate, existingMonths, newRate, newMonths, switchingCost],
   );
 
   const money = (value: number) => formatMoney(value, { currency });
@@ -53,9 +53,9 @@ export default function RefinanceScreen() {
   const reset = () => {
     setOutstandingPrincipal(DEFAULTS.outstandingPrincipal);
     setExistingRate(DEFAULTS.existingRate);
-    setExistingYears(DEFAULTS.existingYears);
+    setExistingMonths(DEFAULTS.existingYears * 12);
     setNewRate(defaultRate || DEFAULTS.newRate);
-    setNewYears(DEFAULTS.newYears);
+    setNewMonths(DEFAULTS.newYears * 12);
     setSwitchingCost(DEFAULTS.switchingCost);
   };
 
@@ -97,13 +97,11 @@ export default function RefinanceScreen() {
           min={0}
           max={60}
         />
-        <RowField
+        <TenureField
           label="Remaining Period"
-          value={existingYears}
-          onChange={setExistingYears}
-          suffix="yr"
-          min={1}
-          max={40}
+          months={existingMonths}
+          onChange={setExistingMonths}
+          compact
         />
       </Card>
 
@@ -117,7 +115,7 @@ export default function RefinanceScreen() {
           min={0}
           max={60}
         />
-        <RowField label="Loan Period" value={newYears} onChange={setNewYears} suffix="yr" min={1} max={40} />
+        <TenureField label="Loan Period" months={newMonths} onChange={setNewMonths} compact />
       </Card>
 
       <Card title="Switching Cost">

@@ -1,17 +1,15 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { saveCalculation } from '../../src/db/calculations';
 
 import { ChartLegend, DonutChart } from '../../src/components/charts';
 import { LoanTypeSelector } from '../../src/components/LoanTypeSelector';
 import { Screen } from '../../src/components/Screen';
-import { CompactField, DateField, SegmentedControl, StepperField } from '../../src/components/inputs';
-import { Button, Card, Chip, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
+import { CompactField, DateField, SegmentedControl, StepperField, TenureField } from '../../src/components/inputs';
+import { Button, Card, Chip, IconGlyph, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
 import {
-  amortize,
   computeSavings,
   solveAnnualRate,
   solvePrincipal,
@@ -33,8 +31,6 @@ import {
 } from '../../src/store/calculator';
 import { useCurrency, useSettingsStore } from '../../src/store/settings';
 import { useTheme } from '../../src/theme/ThemeProvider';
-
-type TenureUnit = 'years' | 'months';
 
 export default function EmiCalculatorScreen() {
   const router = useRouter();
@@ -64,7 +60,6 @@ export default function EmiCalculatorScreen() {
   const setLoanType = useCalculatorStore((s) => s.setLoanType);
   const setSolveFor = useCalculatorStore((s) => s.setSolveFor);
 
-  const [tenureUnit, setTenureUnit] = useState<TenureUnit>('years');
   const [moreOpen, setMoreOpen] = useState(false);
 
   const money = (value: number) => formatMoney(value, { currency });
@@ -157,9 +152,6 @@ export default function EmiCalculatorScreen() {
     };
   }, [resolved, startDate, fees, advanceEmis]);
 
-  const tenureValue = tenureUnit === 'years' ? Math.round(tenureMonths / 12) : tenureMonths;
-  const onTenureChange = (value: number) =>
-    setTenureMonths(tenureUnit === 'years' ? Math.round(value * 12) : Math.round(value));
 
   const resetAll = () => {
     const { defaultRate, defaultTenureYears } = useSettingsStore.getState();
@@ -306,39 +298,13 @@ export default function EmiCalculatorScreen() {
         ) : null}
 
         {solveFor !== 'tenure' ? (
-          <CompactField
+          <TenureField
             label="Tenure"
-            value={tenureValue}
-            onChange={onTenureChange}
-            suffix={tenureUnit === 'years' ? 'Yr' : 'Mo'}
-            caption={tenureUnit === 'years' ? `${tenureMonths} months` : formatTenure(tenureMonths)}
-            min={1}
-            max={tenureUnit === 'years' ? 40 : 480}
-            resetKey={`${revision}-${tenureUnit}`}
-            trailing={
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`Switch to ${tenureUnit === 'years' ? 'months' : 'years'}`}
-                onPress={() => setTenureUnit(tenureUnit === 'years' ? 'months' : 'years')}
-                style={({ pressed }) => [
-                  styles.unitToggle,
-                  {
-                    backgroundColor: colors.accentSoft,
-                    borderRadius: radius.sm,
-                    opacity: pressed ? 0.6 : 1,
-                  },
-                ]}
-              >
-                <Ionicons name="swap-horizontal" size={14} color={colors.accent} />
-              </Pressable>
-            }
-            slider={{
-              min: 1,
-              max: tenureUnit === 'years' ? 40 : 360,
-              step: 1,
-              minLabel: tenureUnit === 'years' ? '1 yr' : '1 mo',
-              maxLabel: tenureUnit === 'years' ? '40 yr' : '360 mo',
-            }}
+            months={tenureMonths}
+            onChange={setTenureMonths}
+            resetKey={revision}
+            slider
+            compact
           />
         ) : null}
       </Card>
@@ -396,7 +362,7 @@ export default function EmiCalculatorScreen() {
             {fees > 0 ? ` · fee ${money(fees)}` : ''}
             {advanceEmis > 0 ? ` · ${advanceEmis} advance` : ''}
           </Label>
-          <Ionicons
+          <IconGlyph
             name={moreOpen ? 'chevron-up' : 'chevron-down'}
             size={16}
             color={colors.textFaint}
@@ -409,13 +375,7 @@ export default function EmiCalculatorScreen() {
             <Label size="caption" tone="muted" style={{ marginBottom: spacing.sm }}>
               Loan type
             </Label>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.typeRow}
-            >
-              <LoanTypeSelector value={loanType} onChange={setLoanType} />
-            </ScrollView>
+            <LoanTypeSelector value={loanType} onChange={setLoanType} />
             <View style={{ height: spacing.lg }} />
             <DateField label="Loan starts on" value={startDate} onChange={setStartDate} />
             <CompactField
@@ -456,8 +416,6 @@ function impliedRate(result: { schedule: Array<{ opening: number; interest: numb
 const styles = StyleSheet.create({
   headlineRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   flex: { flex: 1 },
-  typeRow: { flexDirection: 'row', gap: 8 },
-  unitToggle: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
   moreHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   moreSummary: { flexShrink: 1 },
   moreChevron: { marginLeft: 'auto' },

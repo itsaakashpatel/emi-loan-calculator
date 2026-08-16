@@ -198,10 +198,90 @@ function isMoratorium(e: LoanEvent): e is MoratoriumEvent {
 }
 
 /**
- * Builds the full month-by-month schedule for a loan, applying advance EMIs, moratoria,
- * rate changes and part payments.
+ * Builds a schedule for the loan, choosing the engine from `interestMethod`.
+ *
+ * A flat loan is a genuinely different instrument, not a variation: its interest is fixed on the
+ * original amount the day it is taken, so prepaying saves nothing and a mid-term rate change does
+ * not apply. Rather than thread that through the reducing-balance engine and produce numbers that
+ * quietly mean nothing, flat gets its own schedule and ignores `events` and `advanceEmis`.
  */
 export function amortize(input: LoanInput): LoanResult {
+  return input.interestMethod === 'flat' ? amortizeFlat(input) : amortizeReducing(input);
+}
+
+/**
+ * Flat-rate schedule: interest is `P x r x years` in total, split evenly across the term, and each
+ * instalment repays an equal slice of principal. The balance therefore falls in a straight line.
+ */
+export function amortizeFlat(input: LoanInput): LoanResult {
+  const principal = Math.max(0, input.principal);
+  const principalMinor = toMinor(principal);
+  const tenure = clamp(Math.round(input.tenureMonths), 1, MAX_MONTHS);
+  const startDate = input.startDate ?? todayISO();
+  const fees = Math.max(0, input.fees ?? 0);
+
+  const totalInterestMinor = Math.round(principalMinor * (Math.max(0, input.annualRate) / 100) * (tenure / 12));
+  const interestPerMonth = Math.round(totalInterestMinor / tenure);
+  const principalPerMonth = Math.round(principalMinor / tenure);
+
+  const schedule: ScheduleRow[] = [];
+  let balance = principalMinor;
+  let cumInterest = 0;
+  let cumPrincipal = 0;
+
+  for (let no = 1; no <= tenure; no += 1) {
+    // The last instalment absorbs every rounding residual, so the schedule balances exactly.
+    const last = no === tenure;
+    const interest = last ? totalInterestMinor - cumInterest : interestPerMonth;
+    const paid = last ? balance : Math.min(principalPerMonth, balance);
+    const opening = balance;
+    balance -= paid;
+    cumInterest += interest;
+    cumPrincipal += paid;
+
+    schedule.push({
+      no,
+      date: addMonths(startDate, no),
+      opening: fromMinor(opening),
+      emi: fromMinor(paid + interest),
+      interest: fromMinor(interest),
+      principal: fromMinor(paid),
+      prepayment: 0,
+      capitalised: 0,
+      closing: fromMinor(balance),
+      cumInterest: fromMinor(cumInterest),
+      cumPrincipal: fromMinor(cumPrincipal),
+      paidPct: principalMinor === 0 ? 100 : (cumPrincipal / principalMinor) * 100,
+    });
+  }
+
+  const emi = fromMinor(principalPerMonth + interestPerMonth);
+  return {
+    emi,
+    lastEmi: schedule[schedule.length - 1]?.emi ?? emi,
+    principal,
+    totalInterest: fromMinor(totalInterestMinor),
+    totalPrepayment: 0,
+    capitalisedInterest: 0,
+    fees,
+    totalPayment: principal + fromMinor(totalInterestMinor) + fees,
+    tenureMonths: tenure,
+    advanceAmount: 0,
+    advanceEmis: 0,
+    startDate,
+    firstPaymentDate: schedule[0]?.date ?? addMonths(startDate, 1),
+    lastPaymentDate: schedule[schedule.length - 1]?.date ?? addMonths(startDate, tenure),
+    schedule,
+    yearly: groupByYear(schedule, principalMinor),
+    nonAmortising: false,
+  };
+}
+
+/**
+ * Builds the full month-by-month schedule for a reducing-balance loan, applying advance EMIs,
+ * moratoria, rate changes and part payments.
+ */
+export function amortizeReducing(input: LoanInput): LoanResult {
   const principal = Math.max(0, input.principal);
   const principalMinor = toMinor(principal);
   const tenure = clamp(Math.round(input.tenureMonths), 1, MAX_MONTHS);

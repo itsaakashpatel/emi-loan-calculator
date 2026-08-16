@@ -7,7 +7,7 @@ const TILES: readonly TileSpec[] = [
   { href: '/invest/swp', icon: 'cash-outline', label: 'SWP\nCalculator', hint: 'Systematic withdrawal plan' },
   { href: '/invest/stp', icon: 'swap-horizontal-outline', label: 'STP\nCalculator', hint: 'Systematic transfer plan' },
   { href: '/invest/lumpsum', icon: 'pie-chart-outline', label: 'Lumpsum\nCalculator' },
-  { href: '/invest/sip_inflation', icon: 'analytics-outline', label: 'SIP With\nInflation' },
+  { href: '/invest/sip_inflation', icon: 'pulse-outline', label: 'SIP With\nInflation' },
 ];
 
 export default function SipTab() {

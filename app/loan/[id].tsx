@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -6,9 +5,10 @@ import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { ProgressRing } from '../../src/components/charts';
 import { LoanResultCard, YearlyOutflowChart } from '../../src/components/LoanSummary';
 import { ScheduleTable } from '../../src/components/ScheduleTable';
+import { useHeaderAction } from '../../src/components/Header';
 import { Screen } from '../../src/components/Screen';
 import { NumberField, SegmentedControl } from '../../src/components/inputs';
-import { Button, Card, Chip, EmptyState, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
+import { Button, Card, Chip, EmptyState, IconGlyph, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
 import { computeSavings } from '../../src/lib/finance/emi';
 import { daysBetween, formatDate, todayISO } from '../../src/lib/format/date';
 import { formatMoney, formatTenure, getCurrency } from '../../src/lib/format/money';
@@ -23,7 +23,7 @@ export default function LoanDetailScreen() {
   const loanId = Number(id);
   const router = useRouter();
   const navigation = useNavigation();
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing } = useTheme();
 
   const item = useLoansStore((s) => s.byId(loanId));
   const refresh = useLoansStore((s) => s.refresh);
@@ -63,6 +63,30 @@ export default function LoanDetailScreen() {
         : null,
     [item],
   );
+
+  useHeaderAction({
+    icon: 'share-outline',
+    label: 'Export as PDF',
+    enabled: Boolean(item),
+    onPress: () => {
+      if (!item) return;
+      const { loan: current, result: figures } = item;
+      // Two documents, one button: ask rather than guess which one the user wants.
+      Alert.alert('Export as PDF', undefined, [
+        {
+          text: 'Loan summary',
+          onPress: () =>
+            void sharePdf(loanSummaryHtml(figures, current.currency, current.name), 'loan-summary'),
+        },
+        {
+          text: 'Full schedule',
+          onPress: () =>
+            void sharePdf(scheduleHtml(figures, current.currency, current.name), 'loan-schedule'),
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    },
+  });
 
   if (!item) {
     return (
@@ -211,16 +235,6 @@ export default function LoanDetailScreen() {
           subtitle="Change the amount, rate or tenure"
           icon="create-outline"
           onPress={() => router.push(`/loan/form?id=${loanId}`)}
-        />
-        <ListRow
-          title="Export summary as PDF"
-          icon="document-text-outline"
-          onPress={() => void sharePdf(loanSummaryHtml(result, currency, loan.name), 'loan-summary')}
-        />
-        <ListRow
-          title="Export full schedule as PDF"
-          icon="list-outline"
-          onPress={() => void sharePdf(scheduleHtml(result, currency, loan.name), 'loan-schedule')}
           last
         />
       </Card>
@@ -280,7 +294,7 @@ function PrepaymentModal({
               Part payment
             </Label>
             <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={10} onPress={onClose}>
-              <Ionicons name="close" size={22} color={colors.textMuted} />
+              <IconGlyph name="close" size={22} color={colors.textMuted} />
             </Pressable>
           </View>
 

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "app": {
+    "bundle_id": "host.exp.Exponent",
+    "simulator_udid": "booted"
+  },
+  "paths": {
+    "plan": ".asc/screenshots.json",
+    "raw_dir": "./store/screenshots/raw",
+    "framed_dir": "./store/screenshots/framed"
+  },
+  "pipeline": {
+    "frame_enabled": true,
+    "upload_enabled": false
+  },
+  "upload": {
+    "version_localization_id": "",
+    "device_type": "IPHONE_69",
+    "source_dir": "./store/screenshots/framed/iPhone_16_Pro_-_Black_Titanium_-_Portrait"
+  }
+}

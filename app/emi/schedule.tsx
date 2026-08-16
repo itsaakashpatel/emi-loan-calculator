@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { View } from 'react-native';
 
+import { useHeaderAction } from '../../src/components/Header';
 import { YearlyOutflowChart } from '../../src/components/LoanSummary';
 import { ScheduleTable } from '../../src/components/ScheduleTable';
 import { Screen } from '../../src/components/Screen';
-import { Button, Card, KeyValueRow, Label } from '../../src/components/primitives';
+import { Card, KeyValueRow, Label } from '../../src/components/primitives';
 import { amortize } from '../../src/lib/finance/emi';
 import { formatMoney, formatTenure, getCurrency } from '../../src/lib/format/money';
 import { sharePdf } from '../../src/pdf/share';
@@ -16,9 +17,16 @@ import { useTheme } from '../../src/theme/ThemeProvider';
 export default function ScheduleScreen() {
   const input = useLoanInput();
   const currency = useCurrency();
+
   const { spacing } = useTheme();
   const result = useMemo(() => amortize(input), [input]);
   const money = (value: number) => formatMoney(value, { currency });
+
+  useHeaderAction({
+    icon: 'share-outline',
+    label: 'Export schedule as PDF',
+    onPress: () => void sharePdf(scheduleHtml(result, currency), 'amortisation-schedule'),
+  });
 
   return (
     <Screen>
@@ -51,11 +59,6 @@ export default function ScheduleScreen() {
         </View>
       </Card>
 
-      <Button
-        label="Export schedule as PDF"
-        icon="document-text-outline"
-        onPress={() => void sharePdf(scheduleHtml(result, currency), 'amortisation-schedule')}
-      />
     </Screen>
   );
 }

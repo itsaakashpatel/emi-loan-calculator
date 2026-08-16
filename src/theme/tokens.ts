@@ -22,8 +22,14 @@ export interface Palette {
   surface: string;
   /** Subtle fill: input backgrounds, table stripes. */
   surfaceAlt: string;
-  /** Even subtler fill for nested rows. */
+  /** Even subtler fill for nested rows, and the track behind a segmented control. */
   surfaceSunken: string;
+  /**
+   * The selected thumb inside a segmented control. It must read as *raised* off `surfaceSunken`,
+   * which means lighter than the track in both appearances — so it is not simply `surface`, whose
+   * relationship to `surfaceSunken` flips between light and dark.
+   */
+  segmentActive: string;
   border: string;
   text: string;
   textMuted: string;
@@ -60,6 +66,7 @@ const light: Palette = {
   surface: '#FFFFFF',
   surfaceAlt: '#F4F7FA',
   surfaceSunken: '#E9EEF3',
+  segmentActive: '#FFFFFF',
   border: '#DFE6EC',
   text: '#16222E',
   textMuted: '#61717F',
@@ -92,6 +99,7 @@ const dark: Palette = {
   surface: '#161D24',
   surfaceAlt: '#1D262E',
   surfaceSunken: '#243039',
+  segmentActive: '#3A4750',
   border: '#2A353E',
   text: '#EEF3F7',
   textMuted: '#9AACB9',

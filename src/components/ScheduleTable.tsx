@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -8,7 +7,7 @@ import { formatMoney } from '../lib/format/money';
 import { useCurrency } from '../store/settings';
 import { useTheme } from '../theme/ThemeProvider';
 import type { ScheduleRow, YearGroup } from '../lib/finance/types';
-import { Chip, Label } from './primitives';
+import { Chip, IconGlyph, Label } from './primitives';
 
 /**
  * Year-wise amortisation table that expands into month rows, mirroring how the original app
@@ -89,7 +88,7 @@ export function ScheduleTable({
               ]}
             >
               <View style={[styles.colPeriod, styles.yearLabel]}>
-                <Ionicons
+                <IconGlyph
                   name={open ? 'chevron-down' : 'chevron-forward'}
                   size={13}
                   color={colors.textFaint}
@@ -126,7 +125,7 @@ export function ScheduleTable({
                     >
                       <View style={[styles.colPeriod, styles.monthLabel]}>
                         {onToggleRow ? (
-                          <Ionicons
+                          <IconGlyph
                             name={paid ? 'checkmark-circle' : 'ellipse-outline'}
                             size={15}
                             color={paid ? colors.positive : colors.textFaint}

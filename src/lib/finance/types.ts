@@ -37,6 +37,13 @@ export interface MoratoriumEvent {
 
 export type LoanEvent = PartPaymentEvent | RateChangeEvent | MoratoriumEvent;
 
+/**
+ * How interest is charged. `reducing` charges it on the balance still owed, which is how a normal
+ * mortgage or bank loan works. `flat` charges it on the original amount for the whole term, so the
+ * cost is fixed the day the loan is taken.
+ */
+export type InterestMethod = 'reducing' | 'flat';
+
 export interface LoanInput {
   /** In major units (rupees/dollars), not minor units. */
   principal: number;
@@ -49,6 +56,8 @@ export interface LoanInput {
   advanceEmis?: number;
   /** Processing fee etc., added to cost of the loan but not to the amortised principal. */
   fees?: number;
+  /** Defaults to `reducing`. A flat loan ignores `events` and `advanceEmis` — see `amortizeFlat`. */
+  interestMethod?: InterestMethod;
   events?: LoanEvent[];
 }
 

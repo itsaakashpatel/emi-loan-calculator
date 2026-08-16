@@ -1,10 +1,9 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
 import { NumberField } from '../../src/components/inputs';
-import { Button, Card, Chip, KeyValueRow, Label } from '../../src/components/primitives';
+import { Button, Card, Chip, IconChip, KeyValueRow, Label, SelectChipRow } from '../../src/components/primitives';
 import { formatDate, toISO } from '../../src/lib/format/date';
 import { CURRENCIES, currencyTag, formatMoney } from '../../src/lib/format/money';
 import { convert, getRates, type RatesResult } from '../../src/lib/fx';
@@ -14,7 +13,7 @@ import { useTheme } from '../../src/theme/ThemeProvider';
 const QUICK_QUOTES = ['USD', 'EUR', 'GBP', 'AED', 'CAD', 'AUD', 'SGD', 'JPY'];
 
 export default function CurrencyScreen() {
-  const { colors, radius, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const homeCurrency = useCurrency();
 
   const [amount, setAmount] = useState(1_000);
@@ -101,19 +100,12 @@ export default function CurrencyScreen() {
         <CurrencyPicker label="From" value={from} onChange={setFrom} />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Swap currencies"
+          accessibilityLabel="Swap the two currencies"
+          hitSlop={8}
           onPress={swap}
-          style={({ pressed }) => [
-            styles.swap,
-            {
-              backgroundColor: colors.accentSoft,
-              borderRadius: radius.pill,
-              opacity: pressed ? 0.6 : 1,
-              marginBottom: spacing.md,
-            },
-          ]}
+          style={({ pressed }) => [styles.swap, { opacity: pressed ? 0.6 : 1, marginBottom: spacing.md }]}
         >
-          <Ionicons name="swap-vertical" size={18} color={colors.accent} />
+          <IconChip icon="swap-vertical" />
         </Pressable>
         <CurrencyPicker label="To" value={to} onChange={setTo} />
       </Card>
@@ -167,48 +159,25 @@ function CurrencyPicker({
   value: string;
   onChange: (code: string) => void;
 }) {
-  const { colors, radius, spacing } = useTheme();
+  const { spacing } = useTheme();
   return (
     <View style={{ marginBottom: spacing.md }}>
       <Label size="caption" tone="muted" style={{ marginBottom: spacing.sm }}>
         {label}
       </Label>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pickerRow}>
-        {CURRENCIES.map((currency) => {
-          const active = currency.code === value;
-          return (
-            <Pressable
-              key={currency.code}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              accessibilityLabel={currency.name}
-              onPress={() => onChange(currency.code)}
-              style={({ pressed }) => [
-                {
-                  backgroundColor: active ? colors.accent : colors.surfaceAlt,
-                  borderRadius: radius.md,
-                  paddingVertical: spacing.sm,
-                  paddingHorizontal: spacing.md,
-                  opacity: pressed ? 0.7 : 1,
-                },
-              ]}
-            >
-              <Label
-                size="caption"
-                weight={active ? 'semibold' : 'medium'}
-                style={{ color: active ? colors.onAccent : colors.textMuted }}
-              >
-                {currency.code}
-              </Label>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+      <SelectChipRow
+        options={CURRENCIES.map((entry) => ({
+          value: entry.code,
+          label: entry.code,
+          hint: entry.name,
+        }))}
+        value={value}
+        onChange={onChange}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  swap: { alignSelf: 'center', width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  pickerRow: { flexDirection: 'row', gap: 8 },
+  swap: { alignSelf: 'center' },
 });

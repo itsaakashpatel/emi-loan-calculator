@@ -1,16 +1,18 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import type Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
-import { NumberField, SegmentedControl, StepperField } from '../../src/components/inputs';
-import { Button, Card, Chip, EmptyState, KeyValueRow, Label } from '../../src/components/primitives';
+import { NumberField, RowField, SegmentedControl, StepperField, TenureField } from '../../src/components/inputs';
+import { Button, Card, Chip, EmptyState, IconChip, IconGlyph, KeyValueRow, Label } from '../../src/components/primitives';
 import { computeSavings } from '../../src/lib/finance/emi';
+import { computeFlatEmi } from '../../src/lib/finance/revise';
 import { addMonths, formatMonthYear } from '../../src/lib/format/date';
 import { formatMoney, formatPercent, formatTenure } from '../../src/lib/format/money';
 import type {
   AdjustMode,
+  InterestMethod,
   LoanEvent,
   MoratoriumRecovery,
   MoratoriumType,
@@ -36,6 +38,17 @@ export default function AdvancedScreen() {
   const currency = useCurrency();
   const input = useLoanInput();
 
+  const principal = useCalculatorStore((s) => s.principal);
+  const setPrincipal = useCalculatorStore((s) => s.setPrincipal);
+  const annualRate = useCalculatorStore((s) => s.annualRate);
+  const setAnnualRate = useCalculatorStore((s) => s.setAnnualRate);
+  const tenureMonths = useCalculatorStore((s) => s.tenureMonths);
+  const setTenureMonths = useCalculatorStore((s) => s.setTenureMonths);
+  const fees = useCalculatorStore((s) => s.fees);
+  const setFees = useCalculatorStore((s) => s.setFees);
+  const interestMethod = useCalculatorStore((s) => s.interestMethod);
+  const setInterestMethod = useCalculatorStore((s) => s.setInterestMethod);
+  const revision = useCalculatorStore((s) => s.revision);
   const advanceEmis = useCalculatorStore((s) => s.advanceEmis);
   const setAdvanceEmis = useCalculatorStore((s) => s.setAdvanceEmis);
   const events = useCalculatorStore((s) => s.events);
@@ -47,6 +60,11 @@ export default function AdvancedScreen() {
   const { tab: initialTab } = useLocalSearchParams<{ tab?: string }>();
   const [tab, setTab] = useState<Draft>(isDraft(initialTab) ? initialTab : 'part_payment');
   const savings = useMemo(() => computeSavings(input), [input]);
+  const isFlat = interestMethod === 'flat';
+  const equivalentRate = useMemo(
+    () => (isFlat ? computeFlatEmi(principal, annualRate, tenureMonths).equivalentReducingRate : null),
+    [isFlat, principal, annualRate, tenureMonths],
+  );
   const money = (value: number) => formatMoney(value, { currency });
 
   const startDate = input.startDate ?? '';
@@ -71,22 +89,86 @@ export default function AdvancedScreen() {
         />
       </Card>
 
-      <SegmentedControl<Draft>
-        segments={[
-          { value: 'part_payment', label: 'Part pay' },
-          { value: 'advance_emi', label: 'Advance' },
-          { value: 'moratorium', label: 'Holiday' },
-          { value: 'rate_change', label: 'Rate' },
-        ]}
-        value={tab}
-        onChange={setTab}
-      />
+      <Card title="The loan">
+        <RowField
+          label="Loan Amount"
+          value={principal}
+          onChange={setPrincipal}
+          prefix="currency"
+          min={0}
+          resetKey={revision}
+        />
+        <RowField
+          label="Interest Rate"
+          value={annualRate}
+          onChange={setAnnualRate}
+          suffix="% p.a."
+          decimals={2}
+          min={0}
+          max={60}
+          resetKey={revision}
+        />
+        <SegmentedControl<InterestMethod>
+          segments={[
+            { value: 'reducing', label: 'Reducing' },
+            { value: 'flat', label: 'Flat' },
+          ]}
+          value={interestMethod}
+          onChange={setInterestMethod}
+        />
+        <TenureField
+          label="Period"
+          months={tenureMonths}
+          onChange={setTenureMonths}
+          resetKey={revision}
+          compact
+        />
+        <RowField
+          label="Processing Fees"
+          value={fees}
+          onChange={setFees}
+          prefix="currency"
+          min={0}
+          placeholder="Optional"
+          resetKey={revision}
+        />
+      </Card>
 
-      {tab === 'part_payment' ? (
+      {isFlat ? (
+        <Card title="Adjustments">
+          <Label size="caption" tone="muted">
+            A flat-rate loan fixes its interest on the original amount the day it is taken, so
+            prepaying early saves nothing and a mid-term rate change does not apply. Switch the
+            method to Reducing to model those.
+          </Label>
+          {equivalentRate !== null ? (
+            <KeyValueRow
+              label="Same cost on a reducing balance"
+              value={formatPercent(equivalentRate)}
+              hint="What this flat rate really costs"
+              tone="warning"
+              last
+            />
+          ) : null}
+        </Card>
+      ) : (
+        <SegmentedControl<Draft>
+          segments={[
+            { value: 'part_payment', label: 'Part pay' },
+            { value: 'advance_emi', label: 'Advance' },
+            { value: 'moratorium', label: 'Holiday' },
+            { value: 'rate_change', label: 'Rate' },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
+      )}
+
+      {!isFlat && tab === 'part_payment' ? (
         <PartPaymentForm maxMonth={maxMonth} startDate={startDate} onAdd={addEvent} />
       ) : null}
 
-      {tab === 'advance_emi' ? (
+      {!isFlat && tab === 'advance_emi' ? (
         <Card title="Advance EMI">
           <Label size="caption" tone="muted" style={{ marginBottom: spacing.md }}>
             Some lenders collect the first few EMIs at disbursement. Those instalments are pure principal,
@@ -110,11 +192,11 @@ export default function AdvancedScreen() {
         </Card>
       ) : null}
 
-      {tab === 'moratorium' ? (
+      {!isFlat && tab === 'moratorium' ? (
         <MoratoriumForm maxMonth={maxMonth} startDate={startDate} onAdd={addEvent} />
       ) : null}
 
-      {tab === 'rate_change' ? (
+      {!isFlat && tab === 'rate_change' ? (
         <RateChangeForm
           maxMonth={maxMonth}
           startDate={startDate}
@@ -381,7 +463,7 @@ function EventRow({
   onRemove: () => void;
   last: boolean;
 }) {
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing } = useTheme();
   const { title, subtitle, icon } = describe(event, currency);
 
   return (
@@ -395,11 +477,7 @@ function EventRow({
         },
       ]}
     >
-      <View
-        style={[styles.eventIcon, { backgroundColor: colors.accentSoft, borderRadius: radius.sm }]}
-      >
-        <Ionicons name={icon} size={17} color={colors.accent} />
-      </View>
+      <IconChip icon={icon} />
       <View style={styles.flex}>
         <Label size="body" weight="medium">
           {title}
@@ -420,7 +498,7 @@ function EventRow({
           hitSlop={8}
           onPress={onRemove}
         >
-          <Ionicons name="close-circle" size={20} color={colors.textFaint} />
+          <IconGlyph name="close-circle" size={20} color={colors.textFaint} />
         </Pressable>
       </View>
     </View>
@@ -429,7 +507,6 @@ function EventRow({
 
 const styles = StyleSheet.create({
   eventRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  eventIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   eventMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   flex: { flex: 1 },
 });

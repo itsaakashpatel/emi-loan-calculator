@@ -1,9 +1,10 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { useRouter } from 'expo-router';
+import type Ionicons from '@expo/vector-icons/Ionicons';
+import { useNavigation, useRouter } from 'expo-router';
+import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../theme/ThemeProvider';
-import { Label } from './primitives';
+import { IconGlyph, Label } from './primitives';
 
 /**
  * The round, frosted buttons that sit on the gradient in the corners of every screen. Fixed 44pt
@@ -35,7 +36,7 @@ export function CircleButton({
         styles.shadow,
       ]}
     >
-      <Ionicons name={icon} size={21} color={colors.text} />
+      <IconGlyph name={icon} size={21} color={colors.text} />
     </Pressable>
   );
 }
@@ -58,6 +59,40 @@ export function BackButton() {
       }}
     />
   );
+}
+
+/**
+ * Puts a circular action in a stack screen's top-right corner, mirroring the back button opposite
+ * it. Use it for the screen's one primary action — exporting a PDF, say — so it stays reachable
+ * without scrolling to the end of a long table.
+ *
+ * `onPress` is held in a ref, so an inline arrow at the call site does not re-register the button
+ * on every render. Pass `enabled: false` to hide the button on a screen that has nothing to act on
+ * — the hook still runs, so it stays above any early return.
+ */
+export function useHeaderAction({
+  icon,
+  label,
+  onPress,
+  enabled = true,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  /** Announced to VoiceOver. Required — the button shows no text. */
+  label: string;
+  onPress: () => void;
+  enabled?: boolean;
+}) {
+  const navigation = useNavigation();
+  const handler = useRef(onPress);
+  handler.current = onPress;
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: enabled
+        ? () => <CircleButton icon={icon} label={label} onPress={() => handler.current()} />
+        : undefined,
+    });
+  }, [navigation, icon, label, enabled]);
 }
 
 /**

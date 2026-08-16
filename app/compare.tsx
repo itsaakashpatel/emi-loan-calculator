@@ -1,12 +1,12 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { useHeaderAction } from '../src/components/Header';
 import { Screen } from '../src/components/Screen';
-import { NumberField } from '../src/components/inputs';
-import { Button, Card, Chip, Label } from '../src/components/primitives';
+import { NumberField, TenureField } from '../src/components/inputs';
+import { Button, Card, Chip, IconGlyph, Label } from '../src/components/primitives';
 import { compareLoans, type ComparisonScenario } from '../src/lib/finance/compare';
-import { formatMoney, formatPercent, formatTenure } from '../src/lib/format/money';
+import { formatMoney, formatTenure } from '../src/lib/format/money';
 import { comparisonHtml } from '../src/pdf/templates';
 import { sharePdf } from '../src/pdf/share';
 import { useLoanInput } from '../src/store/calculator';
@@ -25,7 +25,7 @@ interface Row {
 const MAX_SCENARIOS = 3;
 
 export default function CompareScreen() {
-  const { colors, spacing, radius } = useTheme();
+  const { colors, spacing } = useTheme();
   const currency = useCurrency();
   const input = useLoanInput();
 
@@ -63,6 +63,12 @@ export default function CompareScreen() {
   );
 
   const comparison = useMemo(() => compareLoans(scenarios), [scenarios]);
+
+  useHeaderAction({
+    icon: 'share-outline',
+    label: 'Export comparison as PDF',
+    onPress: () => void sharePdf(comparisonHtml(comparison, currency), 'loan-comparison'),
+  });
   const money = (value: number) => formatMoney(value, { currency });
 
   const update = (id: string, patch: Partial<Row>) =>
@@ -163,13 +169,10 @@ export default function CompareScreen() {
             min={0}
             max={60}
           />
-          <NumberField
+          <TenureField
             label="Tenure"
-            value={row.tenureYears}
-            onChange={(tenureYears) => update(row.id, { tenureYears })}
-            suffix="yr"
-            min={1}
-            max={40}
+            months={Math.round(row.tenureYears * 12)}
+            onChange={(months: number) => update(row.id, { tenureYears: months / 12 })}
           />
           <NumberField
             label="Processing fee"
@@ -186,7 +189,7 @@ export default function CompareScreen() {
               onPress={() => setRows((prev) => prev.filter((r) => r.id !== row.id))}
               style={({ pressed }) => [styles.removeRow, { opacity: pressed ? 0.6 : 1 }]}
             >
-              <Ionicons name="trash-outline" size={15} color={colors.negative} />
+              <IconGlyph name="trash-outline" size={15} color={colors.negative} />
               <Label size="caption" tone="negative">
                 Remove {row.label}
               </Label>
@@ -200,13 +203,6 @@ export default function CompareScreen() {
         </Card>
       ))}
 
-      <Button
-        label="Export comparison as PDF"
-        icon="document-text-outline"
-        variant="secondary"
-        onPress={() => void sharePdf(comparisonHtml(comparison, currency), 'loan-comparison')}
-        style={{ borderRadius: radius.md }}
-      />
     </Screen>
   );
 }
@@ -258,7 +254,9 @@ function CompareRow({
 }
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: 'row', alignItems: 'flex-end', paddingBottom: 8 },
+  // flex-start, not flex-end: the "Cheapest" chip is taller than a bare column header, and
+  // bottom alignment pushed the other columns' labels out of line with it.
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', paddingBottom: 8 },
   compareRow: { flexDirection: 'row', alignItems: 'center' },
   labelCol: { width: 104 },
   valueCol: { width: 108 },

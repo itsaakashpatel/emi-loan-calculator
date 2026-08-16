@@ -1,11 +1,11 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import type Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressRing } from '../src/components/charts';
 import { Screen } from '../src/components/Screen';
-import { Button, Card, Chip, EmptyState, Label } from '../src/components/primitives';
+import { Button, Card, Chip, EmptyState, IconChip, Label } from '../src/components/primitives';
 import { daysBetween, formatDate, todayISO } from '../src/lib/format/date';
 import { formatMoney, formatTenure } from '../src/lib/format/money';
 import { LOAN_TYPES } from '../src/store/calculator';
@@ -74,7 +74,7 @@ export default function LoansScreen() {
                 {formatMoney(totals.outstanding, { currency: active[0]!.loan.currency })}
               </Label>
             </View>
-            <View>
+            <View style={styles.totalsAside}>
               <Label size="caption" tone="muted" align="right">
                 Monthly
               </Label>
@@ -137,15 +137,7 @@ function LoanCard({ item, onPress }: { item: LoanWithProgress; onPress: () => vo
       ]}
     >
       <View style={styles.cardTop}>
-        <View
-          style={[styles.typeIcon, { backgroundColor: colors.accentSoft, borderRadius: radius.sm }]}
-        >
-          <Ionicons
-            name={(typeMeta?.icon ?? 'wallet-outline') as keyof typeof Ionicons.glyphMap}
-            size={18}
-            color={colors.accent}
-          />
-        </View>
+        <IconChip icon={(typeMeta?.icon ?? 'wallet-outline') as keyof typeof Ionicons.glyphMap} />
         <View style={styles.flex}>
           <Label size="body" weight="semibold" numberOfLines={1}>
             {loan.name}
@@ -213,10 +205,12 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  totalsRow: { flexDirection: 'row', alignItems: 'flex-end' },
+  // flex-start keeps the two captions on one line. Bottom alignment lined up the boxes instead,
+  // which dropped the smaller "Monthly" caption well below "Total outstanding".
+  totalsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  typeIcon: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
   cardStats: { flexDirection: 'row' },
   cardFooter: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
+  totalsAside: { flexShrink: 0, paddingTop: 2 },
   flex: { flex: 1 },
 });

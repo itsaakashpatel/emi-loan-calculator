@@ -78,17 +78,20 @@ export function group(digits: string, grouping: Grouping): string {
 export interface NumberFormatOptions {
   grouping?: Grouping;
   decimals?: number;
+  /** Drop trailing zeros after the point, so 20.00 reads as 20 but 3.50 reads as 3.5. */
+  trim?: boolean;
 }
 
 /** Groups a number, rounding to `decimals` (default 0). Handles negatives. */
 export function formatNumber(value: number, opts: NumberFormatOptions = {}): string {
-  const { grouping = 'indian', decimals = 0 } = opts;
+  const { grouping = 'indian', decimals = 0, trim = false } = opts;
   if (!Number.isFinite(value)) return '—';
   const negative = value < 0;
   const fixed = Math.abs(value).toFixed(decimals);
   const [intPart = '0', fracPart] = fixed.split('.');
   const grouped = group(intPart, grouping);
-  const body = fracPart ? `${grouped}.${fracPart}` : grouped;
+  const trimmedFrac = trim && fracPart ? fracPart.replace(/0+$/, '') : fracPart;
+  const body = trimmedFrac ? `${grouped}.${trimmedFrac}` : grouped;
   return negative ? `-${body}` : body;
 }
 

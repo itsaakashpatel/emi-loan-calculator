@@ -7,7 +7,6 @@
  * verbatim from `__tests__/db.test.ts`.
  */
 
-import { DatabaseSync } from 'node:sqlite';
 
 jest.mock('expo-sqlite', () => {
   const { DatabaseSync: Sync } = require('node:sqlite') as typeof import('node:sqlite');

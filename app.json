@@ -12,7 +12,16 @@
     ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.aakashpatel.emicalculator"
+      "icon": {
+        "light": "./assets/images/icon.png",
+        "dark": "./assets/images/icon-dark.png",
+        "tinted": "./assets/images/icon-tinted.png"
+      },
+      "bundleIdentifier": "com.aakashpatel.emicalculator",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "plugins": [
       "expo-router",
@@ -23,10 +32,12 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
+          "imageWidth": 180,
           "resizeMode": "contain",
-          "backgroundColor": "#FFFFFF",
+          "backgroundColor": "#EFF4F7",
           "dark": {
-            "backgroundColor": "#0B0B0F"
+            "image": "./assets/images/splash-icon-dark.png",
+            "backgroundColor": "#0C1116"
           }
         }
       ],
@@ -34,6 +45,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "description": "Loan EMI, amortisation, part payment, deposits, SIP and everyday calculators. Everything is worked out on the device.",
+    "primaryColor": "#1E78AE",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0b42d16e-2ac9-46d1-a85c-2feae6f2052d"
+      }
+    },
+    "owner": "itsaakashpatel"
   }
 }
