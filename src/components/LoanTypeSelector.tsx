@@ -1,10 +1,10 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import type Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 
 import { LOAN_TYPES, type LoanType } from '../store/calculator';
 import { useTheme } from '../theme/ThemeProvider';
-import { Label } from './primitives';
+import { IconGlyph, Label } from './primitives';
 
 /**
  * Horizontal row of loan-type pills.
@@ -79,7 +79,7 @@ function LoanTypePill({
         },
       ]}
     >
-      <Ionicons name={icon} size={15} color={active ? colors.onAccent : colors.textMuted} />
+      <IconGlyph name={icon} size={15} color={active ? colors.onAccent : colors.textMuted} />
       <Label
         size="caption"
         weight={active ? 'semibold' : 'medium'}

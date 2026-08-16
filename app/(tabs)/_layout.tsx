@@ -1,10 +1,10 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import type Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { Tabs } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Label } from '../../src/components/primitives';
+import { IconGlyph, Label } from '../../src/components/primitives';
 import { useTheme } from '../../src/theme/ThemeProvider';
 
 const TABS: ReadonlyArray<{
@@ -79,7 +79,7 @@ function FloatingTabBar({ state, navigation }: TabBarProps) {
                   },
                 ]}
               >
-                <Ionicons
+                <IconGlyph
                   name={focused ? meta.activeIcon : meta.icon}
                   size={22}
                   color={focused ? colors.accent : colors.textMuted}

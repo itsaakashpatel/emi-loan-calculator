@@ -133,6 +133,30 @@ interface IconChipProps {
   style?: StyleProp<ViewStyle>;
 }
 
+export function IconGlyph({
+  name,
+  size,
+  color,
+  style,
+}: {
+  name: keyof typeof Ionicons.glyphMap;
+  size: number;
+  color: string;
+  style?: StyleProp<TextStyle>;
+}) {
+  return <Ionicons name={name} size={size} color={color} style={[centeredIconStyle(size), style]} />;
+}
+
+function centeredIconStyle(size: number): TextStyle {
+  return {
+    width: size,
+    height: size,
+    lineHeight: size,
+    textAlign: 'center',
+    includeFontPadding: false,
+  };
+}
+
 /**
  * A tinted circle holding an icon — the app's single icon treatment.
  *
@@ -157,7 +181,7 @@ export function IconChip({ icon, size = 'md', tint, style }: IconChipProps) {
         style,
       ]}
     >
-      <Ionicons name={icon} size={glyph} color={tint ?? colors.accent} />
+      <IconGlyph name={icon} size={glyph} color={tint ?? colors.accent} />
     </View>
   );
 }
@@ -268,7 +292,7 @@ export function Button({
         style,
       ]}
     >
-      {icon ? <Ionicons name={icon} size={17} color={tint[variant]} /> : null}
+      {icon ? <IconGlyph name={icon} size={17} color={tint[variant]} /> : null}
       <Text style={{ color: tint[variant], fontSize: fontSize.body, fontWeight: fontWeight.semibold }}>
         {label}
       </Text>
@@ -361,13 +385,14 @@ export function ListRow({
         styles.listRow,
         {
           paddingVertical: spacing.md,
+          paddingHorizontal: spacing.lg,
           borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
         },
       ]}
     >
       {icon ? (
-        <IconChip icon={icon} tint={iconColor} style={{ marginRight: spacing.md }} />
+        <IconChip icon={icon} tint={iconColor} />
       ) : null}
       <View style={styles.flexShrink}>
         <Label size="body" weight="medium">
@@ -387,7 +412,7 @@ export function ListRow({
         ) : null}
         {right}
         {onPress && !right ? (
-          <Ionicons name="chevron-forward" size={16} color={colors.textFaint} />
+          <IconGlyph name="chevron-forward" size={16} color={colors.textFaint} />
         ) : null}
       </View>
     </View>
@@ -525,7 +550,7 @@ export function Chip({ label, tone = 'neutral', icon }: ChipProps) {
         },
       ]}
     >
-      {icon ? <Ionicons name={icon} size={11} color={fg} /> : null}
+      {icon ? <IconGlyph name={icon} size={11} color={fg} /> : null}
       <Text style={{ color: fg, fontSize: fontSize.micro, fontWeight: fontWeight.semibold }}>{label}</Text>
     </View>
   );
@@ -547,7 +572,7 @@ export function EmptyState({
   const { colors, spacing } = useTheme();
   return (
     <View style={[styles.empty, { paddingVertical: spacing.xxxl }]}>
-      <Ionicons name={icon} size={44} color={colors.textFaint} />
+      <IconGlyph name={icon} size={44} color={colors.textFaint} />
       <View style={{ height: spacing.md }} />
       <Label size="subhead" weight="semibold">
         {title}
@@ -590,7 +615,7 @@ const styles = StyleSheet.create({
   swatch: { width: 9, height: 9, borderRadius: 3 },
   flexShrink: { flexShrink: 1 },
   button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  listRow: { flexDirection: 'row', alignItems: 'center' },
+  listRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   iconChip: { alignItems: 'center', justifyContent: 'center' },
   listRight: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 'auto' },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 4 },

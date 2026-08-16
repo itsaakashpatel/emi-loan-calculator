@@ -1,11 +1,10 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useHeaderAction } from '../src/components/Header';
 import { Screen } from '../src/components/Screen';
 import { NumberField, TenureField } from '../src/components/inputs';
-import { Button, Card, Chip, Label } from '../src/components/primitives';
+import { Button, Card, Chip, IconGlyph, Label } from '../src/components/primitives';
 import { compareLoans, type ComparisonScenario } from '../src/lib/finance/compare';
 import { formatMoney, formatTenure } from '../src/lib/format/money';
 import { comparisonHtml } from '../src/pdf/templates';
@@ -190,7 +189,7 @@ export default function CompareScreen() {
               onPress={() => setRows((prev) => prev.filter((r) => r.id !== row.id))}
               style={({ pressed }) => [styles.removeRow, { opacity: pressed ? 0.6 : 1 }]}
             >
-              <Ionicons name="trash-outline" size={15} color={colors.negative} />
+              <IconGlyph name="trash-outline" size={15} color={colors.negative} />
               <Label size="caption" tone="negative">
                 Remove {row.label}
               </Label>

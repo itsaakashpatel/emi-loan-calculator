@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Slider from '@react-native-community/slider';
 import * as Haptics from 'expo-haptics';
@@ -9,7 +8,7 @@ import { formatDate, parseISO, toISO } from '../lib/format/date';
 import { formatNumber, formatTenure, getCurrency, parseNumber } from '../lib/format/money';
 import { useCurrency } from '../store/settings';
 import { useTheme } from '../theme/ThemeProvider';
-import { Label } from './primitives';
+import { IconGlyph, Label } from './primitives';
 
 /* ---------------------------------------------------------- number field ---- */
 
@@ -709,7 +708,7 @@ export function DateField({
           {formatDate(value)}
         </Label>
         <View style={styles.spacer} />
-        <Ionicons name="calendar-outline" size={18} color={colors.textMuted} />
+        <IconGlyph name="calendar-outline" size={18} color={colors.textMuted} />
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -787,7 +786,7 @@ export function StepperField({
           onPress={() => step(-1)}
           style={styles.stepperButton}
         >
-          <Ionicons name="remove" size={18} color={value <= min ? colors.textFaint : colors.accent} />
+          <IconGlyph name="remove" size={18} color={value <= min ? colors.textFaint : colors.accent} />
         </Pressable>
         <Label size="body" weight="semibold" tabular style={styles.stepperValue}>
           {value}
@@ -799,7 +798,7 @@ export function StepperField({
           onPress={() => step(1)}
           style={styles.stepperButton}
         >
-          <Ionicons name="add" size={18} color={value >= max ? colors.textFaint : colors.accent} />
+          <IconGlyph name="add" size={18} color={value >= max ? colors.textFaint : colors.accent} />
         </Pressable>
       </View>
     </View>

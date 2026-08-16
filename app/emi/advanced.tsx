@@ -1,11 +1,11 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import type Ionicons from '@expo/vector-icons/Ionicons';
 import { useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
 import { NumberField, RowField, SegmentedControl, StepperField, TenureField } from '../../src/components/inputs';
-import { Button, Card, Chip, EmptyState, IconChip, KeyValueRow, Label } from '../../src/components/primitives';
+import { Button, Card, Chip, EmptyState, IconChip, IconGlyph, KeyValueRow, Label } from '../../src/components/primitives';
 import { computeSavings } from '../../src/lib/finance/emi';
 import { computeFlatEmi } from '../../src/lib/finance/revise';
 import { addMonths, formatMonthYear } from '../../src/lib/format/date';
@@ -498,7 +498,7 @@ function EventRow({
           hitSlop={8}
           onPress={onRemove}
         >
-          <Ionicons name="close-circle" size={20} color={colors.textFaint} />
+          <IconGlyph name="close-circle" size={20} color={colors.textFaint} />
         </Pressable>
       </View>
     </View>

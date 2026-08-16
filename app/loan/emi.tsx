@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -9,7 +8,7 @@ import { ChartLegend, DonutChart } from '../../src/components/charts';
 import { LoanTypeSelector } from '../../src/components/LoanTypeSelector';
 import { Screen } from '../../src/components/Screen';
 import { CompactField, DateField, SegmentedControl, StepperField, TenureField } from '../../src/components/inputs';
-import { Button, Card, Chip, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
+import { Button, Card, Chip, IconGlyph, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
 import {
   computeSavings,
   solveAnnualRate,
@@ -363,7 +362,7 @@ export default function EmiCalculatorScreen() {
             {fees > 0 ? ` · fee ${money(fees)}` : ''}
             {advanceEmis > 0 ? ` · ${advanceEmis} advance` : ''}
           </Label>
-          <Ionicons
+          <IconGlyph
             name={moreOpen ? 'chevron-up' : 'chevron-down'}
             size={16}
             color={colors.textFaint}

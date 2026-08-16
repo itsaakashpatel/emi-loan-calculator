@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -9,7 +8,7 @@ import { ScheduleTable } from '../../src/components/ScheduleTable';
 import { useHeaderAction } from '../../src/components/Header';
 import { Screen } from '../../src/components/Screen';
 import { NumberField, SegmentedControl } from '../../src/components/inputs';
-import { Button, Card, Chip, EmptyState, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
+import { Button, Card, Chip, EmptyState, IconGlyph, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
 import { computeSavings } from '../../src/lib/finance/emi';
 import { daysBetween, formatDate, todayISO } from '../../src/lib/format/date';
 import { formatMoney, formatTenure, getCurrency } from '../../src/lib/format/money';
@@ -295,7 +294,7 @@ function PrepaymentModal({
               Part payment
             </Label>
             <Pressable accessibilityRole="button" accessibilityLabel="Close" hitSlop={10} onPress={onClose}>
-              <Ionicons name="close" size={22} color={colors.textMuted} />
+              <IconGlyph name="close" size={22} color={colors.textMuted} />
             </Pressable>
           </View>
 

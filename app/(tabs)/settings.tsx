@@ -1,11 +1,10 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
 import { Alert, StyleSheet, View } from 'react-native';
 
 import { LargeTitleHeader } from '../../src/components/Header';
 import { Screen } from '../../src/components/Screen';
 import { NumberField, SegmentedControl } from '../../src/components/inputs';
-import { Button, Card, Label, ListRow, SelectChipRow } from '../../src/components/primitives';
+import { Button, Card, IconGlyph, Label, ListRow, SelectChipRow } from '../../src/components/primitives';
 import { resetDatabase } from '../../src/db/client';
 import { COMPOUNDING_LABELS, type Compounding } from '../../src/lib/finance/deposits';
 import { CURRENCIES, currencyTag, formatMoney } from '../../src/lib/format/money';
@@ -138,7 +137,7 @@ export default function SettingsScreen() {
       <Button label="Delete all saved data" variant="danger" icon="trash-outline" onPress={confirmClear} />
 
       <View style={[styles.about, { marginTop: spacing.xl }]}>
-        <Ionicons name="calculator-outline" size={26} color={colors.textFaint} />
+        <IconGlyph name="calculator-outline" size={26} color={colors.textFaint} />
         <Label size="caption" tone="muted" align="center" style={{ marginTop: spacing.sm }}>
           EMI Calculator & Loan Manager
         </Label>

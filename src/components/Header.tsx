@@ -1,10 +1,10 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import type Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../theme/ThemeProvider';
-import { Label } from './primitives';
+import { IconGlyph, Label } from './primitives';
 
 /**
  * The round, frosted buttons that sit on the gradient in the corners of every screen. Fixed 44pt
@@ -36,7 +36,7 @@ export function CircleButton({
         styles.shadow,
       ]}
     >
-      <Ionicons name={icon} size={21} color={colors.text} />
+      <IconGlyph name={icon} size={21} color={colors.text} />
     </Pressable>
   );
 }
