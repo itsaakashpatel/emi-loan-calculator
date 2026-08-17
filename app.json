@@ -54,6 +54,13 @@
         "projectId": "0b42d16e-2ac9-46d1-a85c-2feae6f2052d"
       }
     },
-    "owner": "itsaakashpatel"
+    "owner": "itsaakashpatel",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0b42d16e-2ac9-46d1-a85c-2feae6f2052d"
+    },
+    "android": {}
   }
 }
