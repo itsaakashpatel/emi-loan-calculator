@@ -136,9 +136,9 @@ screenshots:
         weight: bold
         color: '#132230'
       - type: text
-        content: No account. No ads. Nothing leaves the phone.
+        content: No account. No ads. No tracking.
         position: ['50%', '10.5%']
-        size: 34
+        size: 36
         color: '#59697A'
       - type: image
         asset: screenshots/raw/07-all.png

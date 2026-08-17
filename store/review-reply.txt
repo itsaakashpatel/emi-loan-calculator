@@ -1,0 +1,44 @@
+Thank you for the review. Here are the answers to each point.
+
+1. SCREEN RECORDING
+A screen recording from a physical iPhone is attached to this reply. It begins at app launch and moves through the core features in order. The app has no account registration, no login, no account deletion, no paid content, no purchases, no subscriptions, and no user-generated content. It requests no permissions, so no permission prompt appears.
+
+2. DEVICES AND OPERATING SYSTEMS TESTED
+- iPhone 16 Pro, iOS 26.6 (physical device, installed through TestFlight)
+- iPhone 16 Pro, iOS 26.6 (iOS Simulator)
+The app supports iPhone only. The minimum supported version is iOS 16.4.
+
+3. FUNCTION AND TARGET AUDIENCE
+The app is a loan and savings calculator. It answers questions such as: what is the monthly instalment on this loan, how much of it is interest, what does a part payment save, and what will this deposit be worth.
+
+Problem it solves: borrowers are quoted a single monthly figure and cannot see how it breaks down. The app shows the month-by-month schedule, the split between principal and interest, and the effect of a part payment or a rate change.
+
+Target audience: ordinary consumers taking or holding a loan, and people planning regular savings. No financial training is needed.
+
+4. SETUP AND ACCESS
+No setup is needed. There is no account, no login, no credential and no sample file. Install the app, open it, and every feature is available at once.
+
+Main features:
+- Home > EMI Calculator. Enter a loan amount, rate and tenure. The instalment, the principal and interest split, and the totals update as you type. Tap Amount, Rate or Tenure to solve for that value instead.
+- Home > Amortisation Schedule. The schedule month by month. The share icon exports a PDF through the system share sheet.
+- Home > Compare Loans. Two offers side by side, including processing fees.
+- Home > Pre Payment / ROI Change. Add a part payment or a rate change and see the saving.
+- Home > Loan Profile. Save a loan and mark instalments as paid, on the device.
+- Banking and SIP tabs. FD, RD, PPF, SIP and SWP calculators.
+- Other tab. GST, percentages, discounts, tip splitting, fuel cost and date difference.
+- Setting > Currency. Choose the display currency.
+
+5. EXTERNAL SERVICES
+Two, and no others.
+
+a) Expo Updates (https://u.expo.dev). The app is built with the Expo framework and checks for an over-the-air JavaScript update at launch. The request sends the release channel, the runtime version and the platform. It sends no user data.
+
+b) Exchange rates (https://open.er-api.com/v6/latest), used only by Other tab > Currency Converter. The request needs no API key and sends only a base currency code. The last response is cached on the device, so the converter works offline.
+
+Every calculation runs on the device. The app uses no authentication service, no payment processor, no analytics, no advertising network, no crash reporting and no AI service.
+
+6. REGIONAL DIFFERENCES
+None. The app behaves the same in every region where it is available. The user may choose a display currency from INR, USD, CAD, EUR, GBP, AUD, AED, SGD, JPY, ZAR, NPR, LKR, PKR and BDT, with matching digit grouping. That is a display preference, not a regional restriction. The app is not distributed in mainland China.
+
+7. REGULATED INDUSTRY AND THIRD-PARTY MATERIAL
+The app is a calculator and nothing more. It does not provide financial services. It does not lend money, arrange or broker credit, hold or transfer funds, process payments, or give financial advice. It has no relationship with any bank or lender, and it displays no protected third-party material. Every result is arithmetic applied to figures the user types in. No licence, permit or authorisation is required.
