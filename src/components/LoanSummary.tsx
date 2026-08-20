@@ -89,7 +89,7 @@ export function LoanResultCard({
       <KeyValueRow
         label="Loan period"
         value={`${formatMonthYear(result.firstPaymentDate)} – ${formatMonthYear(result.lastPaymentDate)}`}
-        hint={`First EMI on ${formatDate(result.firstPaymentDate)}`}
+        hint={`Disbursed ${formatDate(result.startDate)} · first EMI ${formatDate(result.firstPaymentDate)}`}
         last
       />
 

@@ -59,6 +59,7 @@ const DRAFT: LoanDraft = {
   annualRate: 8.5,
   tenureMonths: 240,
   startDate: '2026-01-01',
+  firstPaymentDate: null,
   advanceEmis: 0,
   fees: 0,
   currency: 'INR',
@@ -88,6 +89,21 @@ describe('migrations', () => {
     // Re-running must not re-apply CREATE TABLE (which would throw "table already exists").
     await expect(migrate(db)).resolves.toBeUndefined();
   });
+
+  it('adds first_payment_date to a database created before v2', async () => {
+    const db = await getDb();
+    const columns = await db.getAllAsync<{ name: string }>("PRAGMA table_info('loans')");
+    expect(columns.map((c) => c.name)).toContain('first_payment_date');
+
+    // A loan saved before v2 has no value there, and must keep the old one-month-later schedule.
+    await db.runAsync(
+      `INSERT INTO loans (name, type, principal, annual_rate, tenure_months, start_date,
+         advance_emis, fees, currency, created_at, updated_at)
+       VALUES ('Legacy', 'home', 100000, 10, 12, '2024-11-08', 0, 0, 'INR', 'x', 'x')`,
+    );
+    const [legacy] = await listLoans();
+    expect(legacy!.firstPaymentDate).toBeNull();
+  });
 });
 
 describe('loans repository', () => {
@@ -106,6 +122,17 @@ describe('loans repository', () => {
       currency: 'INR',
       events: [],
     });
+  });
+
+  it('round-trips the first payment date, and keeps null meaning "one month later"', async () => {
+    const derived = await getLoan(await insertLoan(DRAFT));
+    expect(derived?.firstPaymentDate).toBeNull();
+
+    const id = await insertLoan({ ...DRAFT, startDate: '2024-11-08', firstPaymentDate: '2024-11-08' });
+    expect((await getLoan(id))?.firstPaymentDate).toBe('2024-11-08');
+
+    await updateLoan(id, { ...DRAFT, startDate: '2024-11-08', firstPaymentDate: null });
+    expect((await getLoan(id))?.firstPaymentDate).toBeNull();
   });
 
   it('round-trips every event shape', async () => {
@@ -279,6 +306,80 @@ describe('loans store projection', () => {
     expect(after.outstanding).toBeCloseTo(1_000_000 - first.principal, 2);
     expect(after.nextDueDate).toBe(before.result.schedule[1]!.date);
     expect(after.paidAmount).toBeCloseTo(first.emi, 2);
+  });
+
+  it('starts the schedule on the first payment date the loan was saved with', async () => {
+    const derived = await insertLoan({ ...DRAFT, startDate: '2024-11-08' });
+    const explicit = await insertLoan({
+      ...DRAFT,
+      startDate: '2024-11-08',
+      firstPaymentDate: '2024-11-08',
+    });
+    await useLoansStore.getState().refresh();
+
+    // Left alone, instalment 1 lands a month after the money arrives.
+    expect(useLoansStore.getState().byId(derived)!.result.schedule[0]!.date).toBe('2024-12-08');
+    // Set explicitly, it lands on the day the borrower chose.
+    expect(useLoansStore.getState().byId(explicit)!.result.schedule[0]!.date).toBe('2024-11-08');
+    expect(useLoansStore.getState().byId(explicit)!.result.monthsToFirstPayment).toBe(0);
+  });
+
+  it('splits what has been paid into principal and interest', async () => {
+    const id = await insertLoan({ ...DRAFT, tenureMonths: 12, principal: 120_000 });
+    await useLoansStore.getState().refresh();
+    const schedule = useLoansStore.getState().byId(id)!.result.schedule;
+
+    for (const row of schedule.slice(0, 3)) {
+      await useLoansStore
+        .getState()
+        .setInstallmentPaid(id, { no: row.no, dueDate: row.date, amountDue: row.emi }, true);
+    }
+
+    const item = useLoansStore.getState().byId(id)!;
+    const settled = schedule.slice(0, 3);
+    expect(item.principalPaid).toBeCloseTo(
+      settled.reduce((sum, row) => sum + row.principal, 0),
+      2,
+    );
+    expect(item.interestPaid).toBeCloseTo(
+      settled.reduce((sum, row) => sum + row.interest, 0),
+      2,
+    );
+    // The two halves must account for every rupee handed over, and nothing more.
+    expect(item.principalPaid + item.interestPaid).toBeCloseTo(item.paidAmount, 2);
+    // What is left is the cash cost of every instalment still unpaid.
+    expect(item.remainingAmount).toBeCloseTo(
+      schedule.slice(3).reduce((sum, row) => sum + row.emi, 0),
+      2,
+    );
+    expect(item.paidAmount + item.remainingAmount).toBeCloseTo(
+      schedule.reduce((sum, row) => sum + row.emi, 0),
+      2,
+    );
+  });
+
+  it('excludes capitalised interest from interest paid', async () => {
+    // Nothing is paid during a full moratorium, so those months add no interest to the paid total.
+    const id = await insertLoan({
+      ...DRAFT,
+      tenureMonths: 12,
+      principal: 120_000,
+      events: [{ kind: 'moratorium', startMonth: 1, months: 2, type: 'full', recovery: 'extend_tenure' }],
+    });
+    await useLoansStore.getState().refresh();
+    const schedule = useLoansStore.getState().byId(id)!.result.schedule;
+
+    for (const row of schedule.slice(0, 2)) {
+      await useLoansStore
+        .getState()
+        .setInstallmentPaid(id, { no: row.no, dueDate: row.date, amountDue: row.emi }, true);
+    }
+
+    const item = useLoansStore.getState().byId(id)!;
+    expect(schedule[0]!.capitalised).toBeGreaterThan(0);
+    expect(item.interestPaid).toBeCloseTo(0, 2);
+    expect(item.principalPaid).toBeCloseTo(0, 2);
+    expect(item.paidAmount).toBeCloseTo(0, 2);
   });
 
   it('counts overdue installments against today', async () => {

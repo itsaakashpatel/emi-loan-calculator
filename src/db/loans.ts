@@ -16,7 +16,10 @@ export interface SavedLoan {
   principal: number;
   annualRate: number;
   tenureMonths: number;
+  /** Disbursement date. */
   startDate: string;
+  /** Due date of instalment 1. `null` means one month after `startDate`. */
+  firstPaymentDate: string | null;
   advanceEmis: number;
   fees: number;
   currency: string;
@@ -33,6 +36,7 @@ export interface LoanDraft {
   annualRate: number;
   tenureMonths: number;
   startDate: string;
+  firstPaymentDate: string | null;
   advanceEmis: number;
   fees: number;
   currency: string;
@@ -48,6 +52,7 @@ interface LoanRow {
   annual_rate: number;
   tenure_months: number;
   start_date: string;
+  first_payment_date: string | null;
   advance_emis: number;
   fees: number;
   currency: string;
@@ -111,6 +116,7 @@ function rowToLoan(row: LoanRow, events: LoanEvent[]): SavedLoan {
     annualRate: row.annual_rate,
     tenureMonths: row.tenure_months,
     startDate: row.start_date,
+    firstPaymentDate: row.first_payment_date ?? null,
     advanceEmis: row.advance_emis,
     fees: row.fees,
     currency: row.currency,
@@ -193,14 +199,15 @@ export async function insertLoan(draft: LoanDraft): Promise<number> {
   const now = new Date().toISOString();
   const result = await db.runAsync(
     `INSERT INTO loans
-       (name, type, principal, annual_rate, tenure_months, start_date, advance_emis, fees, currency, notes, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (name, type, principal, annual_rate, tenure_months, start_date, first_payment_date, advance_emis, fees, currency, notes, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     draft.name,
     draft.type,
     draft.principal,
     draft.annualRate,
     draft.tenureMonths,
     draft.startDate,
+    draft.firstPaymentDate,
     draft.advanceEmis,
     draft.fees,
     draft.currency,
@@ -217,7 +224,7 @@ export async function updateLoan(id: number, draft: LoanDraft): Promise<void> {
   const db = await getDb();
   await db.runAsync(
     `UPDATE loans SET name = ?, type = ?, principal = ?, annual_rate = ?, tenure_months = ?,
-       start_date = ?, advance_emis = ?, fees = ?, currency = ?, notes = ?, updated_at = ?
+       start_date = ?, first_payment_date = ?, advance_emis = ?, fees = ?, currency = ?, notes = ?, updated_at = ?
      WHERE id = ?`,
     draft.name,
     draft.type,
@@ -225,6 +232,7 @@ export async function updateLoan(id: number, draft: LoanDraft): Promise<void> {
     draft.annualRate,
     draft.tenureMonths,
     draft.startDate,
+    draft.firstPaymentDate,
     draft.advanceEmis,
     draft.fees,
     draft.currency,
@@ -257,6 +265,7 @@ export function draftFromLoan(loan: SavedLoan): LoanDraft {
     annualRate: loan.annualRate,
     tenureMonths: loan.tenureMonths,
     startDate: loan.startDate,
+    firstPaymentDate: loan.firstPaymentDate,
     advanceEmis: loan.advanceEmis,
     fees: loan.fees,
     currency: loan.currency,
@@ -273,6 +282,7 @@ export function emptyDraft(currency: string): LoanDraft {
     annualRate: 0,
     tenureMonths: 12,
     startDate: todayISO(),
+    firstPaymentDate: null,
     advanceEmis: 0,
     fees: 0,
     currency,

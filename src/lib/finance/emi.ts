@@ -8,7 +8,7 @@
  * source of truth for every number the UI and the PDFs show.
  */
 
-import { addMonths, todayISO } from '../format/date';
+import { addMonths, compareISO, monthsBetween, todayISO } from '../format/date';
 import type {
   LoanEvent,
   LoanInput,
@@ -87,6 +87,39 @@ export function requiredMonths(balanceMinor: number, r: number, emiMinor: number
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+/* --------------------------------------------------------------- due dates ---- */
+
+/**
+ * Three dates describe a loan, and conflating them is the classic source of an off-by-one-month
+ * schedule:
+ *
+ * - `startDate` is the disbursement date — the day the money arrives.
+ * - `firstPaymentDate` is when installment 1 falls due.
+ * - the last row's date is when the loan closes.
+ *
+ * Lenders normally set the first installment one month after disbursement, so that is the default.
+ * A borrower whose first installment falls in the disbursement month itself sets `firstPaymentDate`
+ * explicitly, and the whole schedule shifts with it.
+ *
+ * Returns a function giving the due date of installment `no` (1-based). Every date is measured from
+ * one fixed anchor rather than from the installment before it, so the day of month never drifts:
+ * a loan taken on the 31st keeps falling on the 31st, and only borrows a shorter month where it
+ * has to (Jan 31 -> Feb 28 -> Mar 31, never Mar 28).
+ */
+export function dueDateFor(startDate: string, firstPaymentDate?: string): (no: number) => string {
+  // No explicit date: instalment 1 falls one month after disbursement, so the disbursement date
+  // itself is the anchor.
+  if (!firstPaymentDate) return (no) => addMonths(startDate, no);
+  // An instalment cannot fall due before the money arrives.
+  const anchor = compareISO(firstPaymentDate, startDate) < 0 ? startDate : firstPaymentDate;
+  return (no) => addMonths(anchor, no - 1);
+}
+
+/** The date installment 1 falls on, with the default applied. */
+export function resolveFirstPaymentDate(startDate: string, firstPaymentDate?: string): string {
+  return dueDateFor(startDate, firstPaymentDate)(1);
 }
 
 /* ------------------------------------------------------------------ solving ---- */
@@ -218,6 +251,8 @@ export function amortizeFlat(input: LoanInput): LoanResult {
   const principalMinor = toMinor(principal);
   const tenure = clamp(Math.round(input.tenureMonths), 1, MAX_MONTHS);
   const startDate = input.startDate ?? todayISO();
+  const dueDate = dueDateFor(startDate, input.firstPaymentDate);
+  const firstPaymentDate = dueDate(1);
   const fees = Math.max(0, input.fees ?? 0);
 
   const totalInterestMinor = Math.round(principalMinor * (Math.max(0, input.annualRate) / 100) * (tenure / 12));
@@ -241,7 +276,7 @@ export function amortizeFlat(input: LoanInput): LoanResult {
 
     schedule.push({
       no,
-      date: addMonths(startDate, no),
+      date: dueDate(no),
       opening: fromMinor(opening),
       emi: fromMinor(paid + interest),
       interest: fromMinor(interest),
@@ -269,8 +304,9 @@ export function amortizeFlat(input: LoanInput): LoanResult {
     advanceAmount: 0,
     advanceEmis: 0,
     startDate,
-    firstPaymentDate: schedule[0]?.date ?? addMonths(startDate, 1),
-    lastPaymentDate: schedule[schedule.length - 1]?.date ?? addMonths(startDate, tenure),
+    firstPaymentDate: schedule[0]?.date ?? firstPaymentDate,
+    lastPaymentDate: schedule[schedule.length - 1]?.date ?? dueDate(tenure),
+    monthsToFirstPayment: monthsBetween(startDate, firstPaymentDate),
     schedule,
     yearly: groupByYear(schedule, principalMinor),
     nonAmortising: false,
@@ -286,6 +322,8 @@ export function amortizeReducing(input: LoanInput): LoanResult {
   const principalMinor = toMinor(principal);
   const tenure = clamp(Math.round(input.tenureMonths), 1, MAX_MONTHS);
   const startDate = input.startDate ?? todayISO();
+  const dueDate = dueDateFor(startDate, input.firstPaymentDate);
+  const firstPaymentDate = dueDate(1);
   const fees = Math.max(0, input.fees ?? 0);
   const events = input.events ?? [];
 
@@ -402,7 +440,7 @@ export function amortizeReducing(input: LoanInput): LoanResult {
 
     schedule.push({
       no: month,
-      date: addMonths(startDate, month),
+      date: dueDate(month),
       opening: fromMinor(opening),
       emi: fromMinor(emiPaid),
       interest: fromMinor(interest),
@@ -449,8 +487,9 @@ export function amortizeReducing(input: LoanInput): LoanResult {
     advanceAmount: fromMinor(advanceAmountMinor),
     advanceEmis,
     startDate,
-    firstPaymentDate: firstRow ? firstRow.date : addMonths(startDate, 1),
-    lastPaymentDate: lastRow ? lastRow.date : addMonths(startDate, 1),
+    firstPaymentDate: firstRow ? firstRow.date : firstPaymentDate,
+    lastPaymentDate: lastRow ? lastRow.date : firstPaymentDate,
+    monthsToFirstPayment: monthsBetween(startDate, firstPaymentDate),
     schedule,
     yearly: groupByYear(schedule, principalMinor),
     nonAmortising,

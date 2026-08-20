@@ -10,8 +10,8 @@ import { Screen } from '../../src/components/Screen';
 import { NumberField, SegmentedControl } from '../../src/components/inputs';
 import { Button, Card, Chip, EmptyState, IconGlyph, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
 import { computeSavings } from '../../src/lib/finance/emi';
-import { daysBetween, formatDate, todayISO } from '../../src/lib/format/date';
-import { formatMoney, formatTenure, getCurrency } from '../../src/lib/format/money';
+import { daysBetween, describeMonthGap, formatDate, todayISO } from '../../src/lib/format/date';
+import { formatMoney, formatTenure, getCurrency, roundToTotal } from '../../src/lib/format/money';
 import type { AdjustMode, ScheduleRow } from '../../src/lib/finance/types';
 import { sharePdf } from '../../src/pdf/share';
 import { loanSummaryHtml, scheduleHtml } from '../../src/pdf/templates';
@@ -56,6 +56,7 @@ export default function LoanDetailScreen() {
             annualRate: item.loan.annualRate,
             tenureMonths: item.loan.tenureMonths,
             startDate: item.loan.startDate,
+            firstPaymentDate: item.loan.firstPaymentDate ?? undefined,
             advanceEmis: item.loan.advanceEmis,
             fees: item.loan.fees,
             events: item.loan.events,
@@ -110,6 +111,24 @@ export default function LoanDetailScreen() {
   const nextRow = result.schedule.find((row) => !paidNumbers.has(row.no));
   const dueInDays = item.nextDueDate ? daysBetween(todayISO(), item.nextDueDate) : null;
 
+  // The three figures sit in one column, so they must add up on screen, not just in the maths.
+  const [principalShown, interestShown] = roundToTotal(item.paidAmount, [
+    item.principalPaid,
+    item.interestPaid,
+  ]);
+
+  const statusChip = item.isClosed ? (
+    <Chip label="Fully repaid" tone="positive" icon="checkmark-circle-outline" />
+  ) : item.overdueCount > 0 ? (
+    <Chip label={`${item.overdueCount} overdue`} tone="negative" icon="alert-circle-outline" />
+  ) : dueInDays !== null ? (
+    <Chip
+      label={dueInDays === 0 ? 'Due today' : `Next due ${formatDate(item.nextDueDate!)}`}
+      tone={dueInDays <= 3 ? 'warning' : 'neutral'}
+      icon="calendar-outline"
+    />
+  ) : null;
+
   const confirmDelete = () =>
     Alert.alert('Delete this loan?', `"${loan.name}" and its payment history will be removed.`, [
       { text: 'Cancel', style: 'cancel' },
@@ -155,19 +174,31 @@ export default function LoanDetailScreen() {
           </View>
         </View>
 
-        <View style={[styles.chipRow, { marginTop: spacing.md, gap: spacing.sm }]}>
-          {item.isClosed ? (
-            <Chip label="Fully repaid" tone="positive" icon="checkmark-circle-outline" />
-          ) : item.overdueCount > 0 ? (
-            <Chip label={`${item.overdueCount} overdue`} tone="negative" icon="alert-circle-outline" />
-          ) : dueInDays !== null ? (
-            <Chip
-              label={dueInDays === 0 ? 'Due today' : `Next due ${formatDate(item.nextDueDate!)}`}
-              tone={dueInDays <= 3 ? 'warning' : 'neutral'}
-              icon="calendar-outline"
-            />
-          ) : null}
-          <Chip label={`Paid so far ${money(item.paidAmount)}`} />
+        {statusChip ? (
+          <View style={[styles.chipRow, { marginTop: spacing.md, gap: spacing.sm }]}>{statusChip}</View>
+        ) : null}
+
+        <View style={{ marginTop: spacing.md }}>
+          <KeyValueRow
+            label="Principal paid"
+            value={money(principalShown!)}
+            hint={`of ${money(loan.principal)} borrowed`}
+            swatch={colors.principal}
+          />
+          <KeyValueRow
+            label="Interest paid"
+            value={money(interestShown!)}
+            hint={`of ${money(result.totalInterest)} over the full term`}
+            tone="warning"
+            swatch={colors.interest}
+          />
+          <KeyValueRow label="Paid so far" value={money(item.paidAmount)} emphasis />
+          <KeyValueRow
+            label="Still to pay"
+            value={money(item.remainingAmount)}
+            hint={item.isClosed ? 'Loan closed' : `${result.tenureMonths - item.paidCount} instalments left`}
+            last
+          />
         </View>
       </Card>
 
@@ -215,7 +246,21 @@ export default function LoanDetailScreen() {
         <KeyValueRow label="Principal" value={money(loan.principal)} />
         <KeyValueRow label="Interest rate" value={`${loan.annualRate}% p.a.`} />
         <KeyValueRow label="Original tenure" value={formatTenure(loan.tenureMonths)} />
-        <KeyValueRow label="Started" value={formatDate(loan.startDate)} />
+        <KeyValueRow
+          label="Money disbursed on"
+          value={formatDate(result.startDate)}
+          hint="The day the loan amount reached you"
+        />
+        <KeyValueRow
+          label="First EMI on"
+          value={formatDate(result.firstPaymentDate)}
+          hint={`Instalment 1, due ${describeMonthGap(result.monthsToFirstPayment)}`}
+        />
+        <KeyValueRow
+          label="Last EMI on"
+          value={formatDate(result.lastPaymentDate)}
+          hint={`Instalment ${result.tenureMonths}, when the loan closes`}
+        />
         {loan.advanceEmis > 0 ? (
           <KeyValueRow label="Advance EMIs" value={`${loan.advanceEmis} (${money(result.advanceAmount)})`} />
         ) : null}

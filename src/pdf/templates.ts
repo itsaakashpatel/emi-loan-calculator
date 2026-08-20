@@ -71,6 +71,7 @@ function loanFacts(result: LoanResult, currency: string): string {
   }
   if (result.fees > 0) rows.push(kv('Fees & charges', money(result.fees)));
   rows.push(kv('Total payment', money(result.totalPayment)));
+  rows.push(kv('Disbursed on', formatDate(result.startDate)));
   rows.push(kv('First EMI', formatDate(result.firstPaymentDate)));
   rows.push(kv('Last EMI', formatDate(result.lastPaymentDate)));
   return rows.join('');

@@ -8,7 +8,7 @@ import { NumberField, RowField, SegmentedControl, StepperField, TenureField } fr
 import { Button, Card, Chip, EmptyState, IconChip, IconGlyph, KeyValueRow, Label } from '../../src/components/primitives';
 import { computeSavings } from '../../src/lib/finance/emi';
 import { computeFlatEmi } from '../../src/lib/finance/revise';
-import { addMonths, formatMonthYear } from '../../src/lib/format/date';
+import { formatMonthYear } from '../../src/lib/format/date';
 import { formatMoney, formatPercent, formatTenure } from '../../src/lib/format/money';
 import type {
   AdjustMode,
@@ -67,7 +67,12 @@ export default function AdvancedScreen() {
   );
   const money = (value: number) => formatMoney(value, { currency });
 
-  const startDate = input.startDate ?? '';
+  // Every hint here answers "which month is instalment N?". Reading the answer off the baseline
+  // schedule keeps it right whatever the loan's first-instalment date is, with no date maths here.
+  const monthOfInstalment = (no: number) => {
+    const row = savings.baseline.schedule[no - 1];
+    return row ? formatMonthYear(row.date) : undefined;
+  };
   const maxMonth = Math.max(1, savings.baseline.tenureMonths);
 
   return (
@@ -165,7 +170,7 @@ export default function AdvancedScreen() {
       )}
 
       {!isFlat && tab === 'part_payment' ? (
-        <PartPaymentForm maxMonth={maxMonth} startDate={startDate} onAdd={addEvent} />
+        <PartPaymentForm maxMonth={maxMonth} monthOfInstalment={monthOfInstalment} onAdd={addEvent} />
       ) : null}
 
       {!isFlat && tab === 'advance_emi' ? (
@@ -193,13 +198,13 @@ export default function AdvancedScreen() {
       ) : null}
 
       {!isFlat && tab === 'moratorium' ? (
-        <MoratoriumForm maxMonth={maxMonth} startDate={startDate} onAdd={addEvent} />
+        <MoratoriumForm maxMonth={maxMonth} monthOfInstalment={monthOfInstalment} onAdd={addEvent} />
       ) : null}
 
       {!isFlat && tab === 'rate_change' ? (
         <RateChangeForm
           maxMonth={maxMonth}
-          startDate={startDate}
+          monthOfInstalment={monthOfInstalment}
           currentRate={input.annualRate}
           onAdd={addEvent}
         />
@@ -218,7 +223,7 @@ export default function AdvancedScreen() {
               <EventRow
                 key={`${event.kind}-${index}`}
                 event={event}
-                startDate={startDate}
+                monthOfInstalment={monthOfInstalment}
                 currency={currency}
                 onRemove={() => removeEvent(index)}
                 last={index === events.length - 1}
@@ -244,11 +249,11 @@ export default function AdvancedScreen() {
 
 function PartPaymentForm({
   maxMonth,
-  startDate,
+  monthOfInstalment,
   onAdd,
 }: {
   maxMonth: number;
-  startDate: string;
+  monthOfInstalment: (no: number) => string | undefined;
   onAdd: (event: LoanEvent) => void;
 }) {
   const { spacing } = useTheme();
@@ -277,7 +282,7 @@ function PartPaymentForm({
         onChange={setStartMonth}
         min={1}
         max={maxMonth}
-        hint={startDate ? formatMonthYear(addMonths(startDate, startMonth)) : undefined}
+        hint={monthOfInstalment(startMonth)}
       />
       <SegmentedControl<AdjustMode>
         label="Apply the saving to"
@@ -302,11 +307,11 @@ function PartPaymentForm({
 
 function MoratoriumForm({
   maxMonth,
-  startDate,
+  monthOfInstalment,
   onAdd,
 }: {
   maxMonth: number;
-  startDate: string;
+  monthOfInstalment: (no: number) => string | undefined;
   onAdd: (event: LoanEvent) => void;
 }) {
   const { spacing } = useTheme();
@@ -337,7 +342,7 @@ function MoratoriumForm({
         onChange={setStartMonth}
         min={1}
         max={maxMonth}
-        hint={startDate ? formatMonthYear(addMonths(startDate, startMonth)) : undefined}
+        hint={monthOfInstalment(startMonth)}
       />
       <NumberField label="For how many months" value={months} onChange={setMonths} min={1} max={60} suffix="mo" />
       <SegmentedControl<MoratoriumRecovery>
@@ -362,12 +367,12 @@ function MoratoriumForm({
 
 function RateChangeForm({
   maxMonth,
-  startDate,
+  monthOfInstalment,
   currentRate,
   onAdd,
 }: {
   maxMonth: number;
-  startDate: string;
+  monthOfInstalment: (no: number) => string | undefined;
   currentRate: number;
   onAdd: (event: LoanEvent) => void;
 }) {
@@ -396,7 +401,7 @@ function RateChangeForm({
         onChange={setStartMonth}
         min={1}
         max={maxMonth}
-        hint={startDate ? formatMonthYear(addMonths(startDate, startMonth)) : undefined}
+        hint={monthOfInstalment(startMonth)}
       />
       <SegmentedControl<AdjustMode>
         label="Absorb the change by"
@@ -452,13 +457,13 @@ function describe(event: LoanEvent, currency: string): { title: string; subtitle
 
 function EventRow({
   event,
-  startDate,
+  monthOfInstalment,
   currency,
   onRemove,
   last,
 }: {
   event: LoanEvent;
-  startDate: string;
+  monthOfInstalment: (no: number) => string | undefined;
   currency: string;
   onRemove: () => void;
   last: boolean;
@@ -489,7 +494,7 @@ function EventRow({
       <View style={styles.eventMeta}>
         <Chip
           label={
-            startDate ? formatMonthYear(addMonths(startDate, event.startMonth)) : `#${event.startMonth}`
+            monthOfInstalment(event.startMonth) ?? `#${event.startMonth}`
           }
         />
         <Pressable

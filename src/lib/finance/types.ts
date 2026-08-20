@@ -50,8 +50,14 @@ export interface LoanInput {
   /** Annual nominal rate as a percentage, e.g. `8.5`. */
   annualRate: number;
   tenureMonths: number;
-  /** Disbursement date, `YYYY-MM-DD`. The first installment falls one month later. */
+  /** Disbursement date, `YYYY-MM-DD` — the day the money reaches the borrower. */
   startDate?: string;
+  /**
+   * Due date of installment 1, `YYYY-MM-DD`. Omit it and the first installment falls one month
+   * after `startDate`, which is the usual lender convention. A date before `startDate` is clamped
+   * to `startDate`, because no installment can fall due before the money arrives.
+   */
+  firstPaymentDate?: string;
   /** Number of EMIs collected upfront at disbursement (auto/consumer loans). */
   advanceEmis?: number;
   /** Processing fee etc., added to cost of the loan but not to the amortised principal. */
@@ -112,9 +118,14 @@ export interface LoanResult {
   /** Cash collected upfront as advance EMIs. */
   advanceAmount: number;
   advanceEmis: number;
+  /** Disbursement date. */
   startDate: string;
+  /** Due date of installment 1. */
   firstPaymentDate: string;
+  /** Due date of the final installment. */
   lastPaymentDate: string;
+  /** Whole months from disbursement to the first installment. Normally 1. */
+  monthsToFirstPayment: number;
   schedule: ScheduleRow[];
   yearly: YearGroup[];
   /** True when the EMI never covers the interest, so the loan cannot amortise. */

@@ -33,7 +33,10 @@ export interface CalculatorState {
   principal: number;
   annualRate: number;
   tenureMonths: number;
+  /** Disbursement date. */
   startDate: string;
+  /** Due date of instalment 1. `null` means one month after `startDate`. */
+  firstPaymentDate: string | null;
   advanceEmis: number;
   fees: number;
   loanType: LoanType;
@@ -50,6 +53,7 @@ export interface CalculatorState {
   setAnnualRate: (value: number) => void;
   setTenureMonths: (value: number) => void;
   setStartDate: (value: string) => void;
+  setFirstPaymentDate: (value: string | null) => void;
   setAdvanceEmis: (value: number) => void;
   setFees: (value: number) => void;
   setLoanType: (value: LoanType) => void;
@@ -81,6 +85,7 @@ const INITIAL = {
 export const useCalculatorStore = create<CalculatorState>((set, get) => ({
   ...INITIAL,
   startDate: todayISO(),
+  firstPaymentDate: null,
   events: [],
   revision: 0,
 
@@ -88,6 +93,7 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
   setAnnualRate: (annualRate) => set({ annualRate: Math.max(0, annualRate) }),
   setTenureMonths: (tenureMonths) => set({ tenureMonths: Math.max(1, Math.round(tenureMonths)) }),
   setStartDate: (startDate) => set({ startDate }),
+  setFirstPaymentDate: (firstPaymentDate) => set({ firstPaymentDate }),
   setAdvanceEmis: (advanceEmis) => set({ advanceEmis: Math.max(0, Math.round(advanceEmis)) }),
   setFees: (fees) => set({ fees: Math.max(0, fees) }),
   setLoanType: (loanType) => set({ loanType }),
@@ -114,6 +120,7 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
       annualRate: input.annualRate,
       tenureMonths: input.tenureMonths,
       startDate: input.startDate ?? todayISO(),
+      firstPaymentDate: input.firstPaymentDate ?? null,
       advanceEmis: input.advanceEmis ?? 0,
       fees: input.fees ?? 0,
       events: input.events ?? [],
@@ -128,6 +135,7 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
       annualRate: s.annualRate,
       tenureMonths: s.tenureMonths,
       startDate: s.startDate,
+      firstPaymentDate: s.firstPaymentDate ?? undefined,
       advanceEmis: s.advanceEmis,
       fees: s.fees,
       interestMethod: s.interestMethod,
@@ -147,6 +155,7 @@ export function useLoanInput(): LoanInput {
       annualRate: s.annualRate,
       tenureMonths: s.tenureMonths,
       startDate: s.startDate,
+      firstPaymentDate: s.firstPaymentDate ?? undefined,
       advanceEmis: s.advanceEmis,
       fees: s.fees,
       interestMethod: s.interestMethod,

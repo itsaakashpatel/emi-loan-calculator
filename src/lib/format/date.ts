@@ -78,6 +78,12 @@ export function monthShort(month: number): string {
   return MONTHS_SHORT[month - 1] ?? '???';
 }
 
+/** `0` -> "the same month", `1` -> "1 month later", `4` -> "4 months later". */
+export function describeMonthGap(months: number): string {
+  if (months <= 0) return 'the same month';
+  return months === 1 ? '1 month later' : `${months} months later`;
+}
+
 export function compareISO(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
