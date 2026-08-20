@@ -2,7 +2,7 @@
   "expo": {
     "name": "EMI Calculator",
     "slug": "emi-loan-calculator",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "emicalc",
@@ -18,7 +18,7 @@
         "tinted": "./assets/images/icon-tinted.png"
       },
       "bundleIdentifier": "com.aakashpatel.emicalculator",
-      "buildNumber": "1",
+      "buildNumber": "3",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
