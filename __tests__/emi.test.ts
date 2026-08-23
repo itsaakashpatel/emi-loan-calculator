@@ -2,9 +2,11 @@ import {
   amortize,
   computeEmi,
   computeSavings,
+  dueDateFor,
   monthlyRate,
   partPaymentApplies,
   requiredMonths,
+  resolveFirstPaymentDate,
   toMinor,
 } from '../src/lib/finance/emi';
 import type { LoanInput } from '../src/lib/finance/types';
@@ -105,6 +107,79 @@ describe('amortize', () => {
     expect(schedule[0]!.date).toBe('2026-02-28');
     expect(schedule[1]!.date).toBe('2026-03-31');
     expect(schedule[11]!.date).toBe('2027-01-31');
+  });
+
+  it('defaults the first installment to one month after disbursement', () => {
+    const result = amortize({ ...CAR_LOAN, startDate: '2024-11-08' });
+    expect(result.startDate).toBe('2024-11-08');
+    expect(result.firstPaymentDate).toBe('2024-12-08');
+    expect(result.monthsToFirstPayment).toBe(1);
+    expect(result.schedule[0]!.date).toBe('2024-12-08');
+  });
+
+  it('starts the schedule on the first payment date when one is given', () => {
+    const result = amortize({
+      ...CAR_LOAN,
+      startDate: '2024-11-08',
+      firstPaymentDate: '2024-11-08',
+    });
+    expect(result.startDate).toBe('2024-11-08');
+    expect(result.firstPaymentDate).toBe('2024-11-08');
+    expect(result.monthsToFirstPayment).toBe(0);
+    expect(result.schedule[0]!.date).toBe('2024-11-08');
+    expect(result.schedule[1]!.date).toBe('2024-12-08');
+    // Shifting the dates must not change a single figure in the loan.
+    const shifted = amortize({ ...CAR_LOAN, startDate: '2024-11-08' });
+    expect(result.emi).toBe(shifted.emi);
+    expect(result.totalInterest).toBeCloseTo(shifted.totalInterest, 6);
+  });
+
+  it('honours a first payment date several months out', () => {
+    const result = amortize({
+      ...CAR_LOAN,
+      startDate: '2026-01-10',
+      firstPaymentDate: '2026-04-10',
+    });
+    expect(result.monthsToFirstPayment).toBe(3);
+    expect(result.schedule[0]!.date).toBe('2026-04-10');
+    expect(result.lastPaymentDate).toBe('2031-03-10');
+  });
+
+  it('never dates an installment before the money arrives', () => {
+    const result = amortize({
+      ...CAR_LOAN,
+      startDate: '2026-05-01',
+      firstPaymentDate: '2026-01-01',
+    });
+    expect(result.firstPaymentDate).toBe('2026-05-01');
+    expect(result.monthsToFirstPayment).toBe(0);
+  });
+
+  it('anchors every due date so the day of month never drifts', () => {
+    // Anchored on the 31st, February borrows a shorter month but March goes back to the 31st.
+    const explicit = amortize({
+      ...CAR_LOAN,
+      startDate: '2025-12-31',
+      firstPaymentDate: '2025-12-31',
+    });
+    expect(explicit.schedule.slice(0, 4).map((row) => row.date)).toEqual([
+      '2025-12-31',
+      '2026-01-31',
+      '2026-02-28',
+      '2026-03-31',
+    ]);
+  });
+
+  it('dates a flat loan the same way as a reducing one', () => {
+    const flat = amortize({
+      ...CAR_LOAN,
+      interestMethod: 'flat',
+      startDate: '2024-11-08',
+      firstPaymentDate: '2024-11-08',
+    });
+    expect(flat.firstPaymentDate).toBe('2024-11-08');
+    expect(flat.schedule[0]!.date).toBe('2024-11-08');
+    expect(flat.monthsToFirstPayment).toBe(0);
   });
 
   it('groups rows into calendar years', () => {
@@ -338,5 +413,24 @@ describe('requiredMonths', () => {
 
   it('divides evenly at 0%', () => {
     expect(requiredMonths(toMinor(120_000), 0, toMinor(10_000))).toBe(12);
+  });
+});
+
+describe('dueDateFor', () => {
+  it('measures from the disbursement date when no first payment date is given', () => {
+    const due = dueDateFor('2026-01-31');
+    expect(due(1)).toBe('2026-02-28');
+    expect(due(2)).toBe('2026-03-31');
+    expect(resolveFirstPaymentDate('2026-01-31')).toBe('2026-02-28');
+  });
+
+  it('measures from the first payment date when one is given', () => {
+    const due = dueDateFor('2024-11-08', '2024-11-08');
+    expect(due(1)).toBe('2024-11-08');
+    expect(due(13)).toBe('2025-11-08');
+  });
+
+  it('clamps a first payment date that precedes disbursement', () => {
+    expect(resolveFirstPaymentDate('2026-05-01', '2026-01-01')).toBe('2026-05-01');
   });
 });

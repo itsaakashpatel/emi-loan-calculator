@@ -11,11 +11,12 @@ import { CompactField, DateField, SegmentedControl, StepperField, TenureField } 
 import { Button, Card, Chip, IconGlyph, KeyValueRow, Label, ListRow } from '../../src/components/primitives';
 import {
   computeSavings,
+  resolveFirstPaymentDate,
   solveAnnualRate,
   solvePrincipal,
   solveTenureMonths,
 } from '../../src/lib/finance/emi';
-import { formatDate, todayISO } from '../../src/lib/format/date';
+import { describeMonthGap, formatDate, monthsBetween, todayISO } from '../../src/lib/format/date';
 import {
   amountToWords,
   formatMoney,
@@ -43,6 +44,7 @@ export default function EmiCalculatorScreen() {
   const tenureMonths = useCalculatorStore((s) => s.tenureMonths);
   const emiInput = useCalculatorStore((s) => s.emi);
   const startDate = useCalculatorStore((s) => s.startDate);
+  const firstPaymentDate = useCalculatorStore((s) => s.firstPaymentDate);
   const fees = useCalculatorStore((s) => s.fees);
   const advanceEmis = useCalculatorStore((s) => s.advanceEmis);
   const loanType = useCalculatorStore((s) => s.loanType);
@@ -55,6 +57,7 @@ export default function EmiCalculatorScreen() {
   const setTenureMonths = useCalculatorStore((s) => s.setTenureMonths);
   const setEmi = useCalculatorStore((s) => s.setEmi);
   const setStartDate = useCalculatorStore((s) => s.setStartDate);
+  const setFirstPaymentDate = useCalculatorStore((s) => s.setFirstPaymentDate);
   const setFees = useCalculatorStore((s) => s.setFees);
   const setAdvanceEmis = useCalculatorStore((s) => s.setAdvanceEmis);
   const setLoanType = useCalculatorStore((s) => s.setLoanType);
@@ -152,6 +155,9 @@ export default function EmiCalculatorScreen() {
     };
   }, [resolved, startDate, fees, advanceEmis]);
 
+
+  // The date the first instalment actually falls on, whether or not the user has overridden it.
+  const firstEmiOn = resolveFirstPaymentDate(startDate, firstPaymentDate ?? undefined);
 
   const resetAll = () => {
     const { defaultRate, defaultTenureYears } = useSettingsStore.getState();
@@ -377,7 +383,18 @@ export default function EmiCalculatorScreen() {
             </Label>
             <LoanTypeSelector value={loanType} onChange={setLoanType} />
             <View style={{ height: spacing.lg }} />
-            <DateField label="Loan starts on" value={startDate} onChange={setStartDate} />
+            <DateField
+              label="Money disbursed on"
+              value={startDate}
+              onChange={setStartDate}
+              hint="The day the loan amount reaches you."
+            />
+            <DateField
+              label="First EMI on"
+              value={firstEmiOn}
+              onChange={setFirstPaymentDate}
+              hint={`Instalment 1 falls due ${describeMonthGap(monthsBetween(startDate, firstEmiOn))}.`}
+            />
             <CompactField
               label="Processing fee"
               value={fees}

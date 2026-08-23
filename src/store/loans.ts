@@ -20,10 +20,18 @@ export interface LoanWithProgress {
   result: LoanResult;
   payments: PaymentRecord[];
   paidCount: number;
+  /** Cash paid across every settled instalment. Equals `principalPaid + interestPaid`. */
   paidAmount: number;
+  /** Principal cleared so far, including any part payment. */
+  principalPaid: number;
+  /** Interest paid so far in cash. Interest capitalised in a moratorium is excluded. */
+  interestPaid: number;
   /** 0-100, share of installments settled. */
   progressPct: number;
+  /** Principal still owed. */
   outstanding: number;
+  /** Cash still to hand over: every unpaid instalment, interest included. */
+  remainingAmount: number;
   nextDueDate: string | null;
   nextDueAmount: number;
   overdueCount: number;
@@ -52,6 +60,7 @@ function project(loan: SavedLoan, payments: PaymentRecord[]): LoanWithProgress {
     annualRate: loan.annualRate,
     tenureMonths: loan.tenureMonths,
     startDate: loan.startDate,
+    firstPaymentDate: loan.firstPaymentDate ?? undefined,
     advanceEmis: loan.advanceEmis,
     fees: loan.fees,
     events: loan.events,
@@ -66,9 +75,13 @@ function project(loan: SavedLoan, payments: PaymentRecord[]): LoanWithProgress {
   const next = pending[0];
   const overdueCount = pending.filter((row) => row.date < today).length;
   const totalInstallments = result.schedule.length;
-  const principalPaid = result.schedule
-    .filter((row) => paidNumbers.has(row.no))
-    .reduce((sum, row) => sum + row.principal + row.prepayment, 0);
+
+  // Split what has been paid into its two halves, so the loan screen can show where the money went.
+  // Interest capitalised during a full moratorium accrues without being paid, so it is subtracted.
+  const settled = result.schedule.filter((row) => paidNumbers.has(row.no));
+  const principalPaid = settled.reduce((sum, row) => sum + row.principal + row.prepayment, 0);
+  const interestPaid = settled.reduce((sum, row) => sum + row.interest - row.capitalised, 0);
+  const remainingAmount = pending.reduce((sum, row) => sum + row.emi + row.prepayment, 0);
 
   return {
     loan,
@@ -76,8 +89,11 @@ function project(loan: SavedLoan, payments: PaymentRecord[]): LoanWithProgress {
     payments,
     paidCount: paid.length,
     paidAmount,
+    principalPaid,
+    interestPaid,
     progressPct: totalInstallments > 0 ? (paid.length / totalInstallments) * 100 : 0,
     outstanding: Math.max(0, loan.principal + result.capitalisedInterest - principalPaid),
+    remainingAmount,
     nextDueDate: next?.date ?? null,
     nextDueAmount: next ? next.emi + next.prepayment : 0,
     overdueCount,

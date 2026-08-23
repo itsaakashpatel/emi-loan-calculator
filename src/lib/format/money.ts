@@ -110,6 +110,26 @@ export function formatMoney(value: number, opts: MoneyFormatOptions = {}): strin
   return body.startsWith('-') ? `-${cur.symbol}${body.slice(1)}` : `${cur.symbol}${body}`;
 }
 
+/**
+ * Rounds `parts` to whole units so they still add up to the rounded `total`.
+ *
+ * Rounding each figure on its own is not additive — 9740.51 and 42328.93 both round up while their
+ * 52069.44 total rounds down, so a column showing all three is a unit out and reads as an
+ * arithmetic error. The largest part absorbs the residual, putting the distortion where it is
+ * proportionally smallest.
+ */
+export function roundToTotal(total: number, parts: number[]): number[] {
+  const rounded = parts.map((p) => Math.round(p));
+  const residual = Math.round(total) - rounded.reduce((sum, p) => sum + p, 0);
+  if (residual === 0 || rounded.length === 0) return rounded;
+  let largest = 0;
+  for (let i = 1; i < parts.length; i += 1) {
+    if (Math.abs(parts[i]!) > Math.abs(parts[largest]!)) largest = i;
+  }
+  rounded[largest] = rounded[largest]! + residual;
+  return rounded;
+}
+
 const INDIAN_UNITS: ReadonlyArray<[number, string]> = [
   [1e7, 'Cr'],
   [1e5, 'L'],

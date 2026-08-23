@@ -2,7 +2,7 @@
   "expo": {
     "name": "EMI Calculator",
     "slug": "emi-loan-calculator",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "emicalc",
@@ -18,7 +18,7 @@
         "tinted": "./assets/images/icon-tinted.png"
       },
       "bundleIdentifier": "com.aakashpatel.emicalculator",
-      "buildNumber": "1",
+      "buildNumber": "3",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -54,6 +54,13 @@
         "projectId": "0b42d16e-2ac9-46d1-a85c-2feae6f2052d"
       }
     },
-    "owner": "itsaakashpatel"
+    "owner": "itsaakashpatel",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0b42d16e-2ac9-46d1-a85c-2feae6f2052d"
+    },
+    "android": {}
   }
 }

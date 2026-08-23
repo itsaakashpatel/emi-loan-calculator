@@ -674,10 +674,13 @@ export function DateField({
   label,
   value,
   onChange,
+  hint,
 }: {
   label: string;
   value: string;
   onChange: (iso: string) => void;
+  /** One line under the field, for saying what the date means. */
+  hint?: string;
 }) {
   const { colors, radius, spacing, mode } = useTheme();
   const [open, setOpen] = useState(false);
@@ -748,6 +751,12 @@ export function DateField({
           </Pressable>
         </Pressable>
       </Modal>
+
+      {hint ? (
+        <Label size="micro" tone="faint" style={{ marginTop: spacing.xs }}>
+          {hint}
+        </Label>
+      ) : null}
     </View>
   );
 }

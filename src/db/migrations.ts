@@ -75,6 +75,13 @@ const MIGRATIONS: ReadonlyArray<(db: SQLiteDatabase) => Promise<void>> = [
       );
     `);
   },
+
+  // v2 — separate the disbursement date from the first instalment date
+  async (db) => {
+    await db.execAsync(`
+      ALTER TABLE loans ADD COLUMN first_payment_date TEXT;
+    `);
+  },
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

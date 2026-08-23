@@ -6,8 +6,8 @@ import { Screen } from '../../src/components/Screen';
 import { DateField, NumberField, StepperField, TenureField, TextField } from '../../src/components/inputs';
 import { Button, Card, KeyValueRow, Label } from '../../src/components/primitives';
 import { draftFromLoan, type LoanDraft } from '../../src/db/loans';
-import { amortize } from '../../src/lib/finance/emi';
-import { todayISO } from '../../src/lib/format/date';
+import { amortize, resolveFirstPaymentDate } from '../../src/lib/finance/emi';
+import { describeMonthGap, formatDate, monthsBetween, todayISO } from '../../src/lib/format/date';
 import { formatMoney } from '../../src/lib/format/money';
 import { LOAN_TYPES, useCalculatorStore, type LoanType } from '../../src/store/calculator';
 import { useLoansStore } from '../../src/store/loans';
@@ -42,6 +42,7 @@ export default function LoanFormScreen() {
       annualRate: calculator.annualRate,
       tenureMonths: calculator.tenureMonths,
       startDate: calculator.startDate,
+      firstPaymentDate: calculator.firstPaymentDate,
       advanceEmis: calculator.advanceEmis,
       fees: calculator.fees,
       currency,
@@ -62,6 +63,7 @@ export default function LoanFormScreen() {
         annualRate: draft.annualRate,
         tenureMonths: draft.tenureMonths,
         startDate: draft.startDate,
+        firstPaymentDate: draft.firstPaymentDate ?? undefined,
         advanceEmis: draft.advanceEmis,
         fees: draft.fees,
         events: draft.events,
@@ -69,13 +71,25 @@ export default function LoanFormScreen() {
     [draft],
   );
 
+  // Three dates, kept distinct: the money arrives, instalment 1 falls due, the loan closes.
+  // `firstPaymentDate` stays null until the user overrides it, so it tracks the disbursement date.
+  const disbursedOn = draft.startDate || todayISO();
+  const firstEmiOn = resolveFirstPaymentDate(disbursedOn, draft.firstPaymentDate ?? undefined);
+  const monthsToFirstEmi = monthsBetween(disbursedOn, firstEmiOn);
+
   const defaultName = useMemo(() => {
     const label = LOAN_TYPES.find((t) => t.value === draft.type)?.label ?? 'Loan';
     return `${label} loan`;
   }, [draft.type]);
 
   const save = async () => {
-    const named: LoanDraft = { ...draft, name: draft.name.trim() || defaultName };
+    const named: LoanDraft = {
+      ...draft,
+      name: draft.name.trim() || defaultName,
+      // Store the date the schedule actually uses. Moving the disbursement date past an already
+      // chosen first instalment would otherwise leave a stored date the engine silently clamps.
+      firstPaymentDate: draft.firstPaymentDate ? firstEmiOn : null,
+    };
     if (named.principal <= 0) {
       Alert.alert('Add an amount', 'Enter the loan amount before saving.');
       return;
@@ -135,9 +149,16 @@ export default function LoanFormScreen() {
           onChange={(tenureMonths: number) => patch({ tenureMonths })}
         />
         <DateField
-          label="Loan starts on"
-          value={draft.startDate || todayISO()}
+          label="Money disbursed on"
+          value={disbursedOn}
           onChange={(startDate) => patch({ startDate })}
+          hint="The day the loan amount reaches you."
+        />
+        <DateField
+          label="First EMI on"
+          value={firstEmiOn}
+          onChange={(firstPaymentDate) => patch({ firstPaymentDate })}
+          hint={`Instalment 1 falls due ${describeMonthGap(monthsToFirstEmi)}. The last EMI then falls on ${formatDate(preview.lastPaymentDate)}.`}
         />
         <StepperField
           label="Advance EMIs"

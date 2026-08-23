@@ -16,6 +16,7 @@ import {
   groupIndian,
   groupWestern,
   parseNumber,
+  roundToTotal,
 } from '../src/lib/format/money';
 
 describe('Indian digit grouping', () => {
@@ -152,5 +153,29 @@ describe('date helpers', () => {
     expect(daysBetween('2026-08-01', '2026-08-31')).toBe(30);
     expect(daysBetween('2026-08-31', '2026-08-01')).toBe(-30);
     expect(daysBetween('2026-12-31', '2027-01-01')).toBe(1);
+  });
+});
+
+describe('roundToTotal', () => {
+  it('keeps the parts adding up to the total', () => {
+    // Both parts round up while the total rounds down, so naive rounding is a unit out.
+    expect(Math.round(9740.51) + Math.round(42328.93)).toBe(52070);
+    expect(roundToTotal(52069.44, [9740.51, 42328.93])).toEqual([9741, 42328]);
+  });
+
+  it('gives the residual to the largest part', () => {
+    const [small, large] = roundToTotal(100, [0.5, 99.5]);
+    expect(small! + large!).toBe(100);
+    expect(small).toBe(1);
+    expect(large).toBe(99);
+  });
+
+  it('leaves exact figures alone', () => {
+    expect(roundToTotal(300, [100, 200])).toEqual([100, 200]);
+    expect(roundToTotal(0, [0, 0])).toEqual([0, 0]);
+  });
+
+  it('handles an empty split', () => {
+    expect(roundToTotal(10, [])).toEqual([]);
   });
 });
