@@ -41,7 +41,8 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      "./plugins/with-local-notifications-only"
     ],
     "experiments": {
       "typedRoutes": true
