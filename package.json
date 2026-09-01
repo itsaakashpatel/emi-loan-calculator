@@ -12,6 +12,7 @@
     "doctor": "expo-doctor"
   },
   "dependencies": {
+    "@expo/config-plugins": "~57.0.8",
     "@expo/metro-runtime": "~57.0.10",
     "@expo/vector-icons": "^15.1.1",
     "@react-native-community/datetimepicker": "9.1.0",
