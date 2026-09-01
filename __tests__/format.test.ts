@@ -1,4 +1,5 @@
 import {
+  addDays,
   addMonths,
   daysBetween,
   daysInMonth,
@@ -130,6 +131,13 @@ describe('date helpers', () => {
     expect(addMonths('2026-12-15', 1)).toBe('2027-01-15');
     expect(addMonths('2026-03-31', -1)).toBe('2026-02-28');
     expect(addMonths('2026-06-10', 240)).toBe('2046-06-10');
+  });
+
+  it('adds days across month and year ends', () => {
+    expect(addDays('2026-08-31', 1)).toBe('2026-09-01');
+    expect(addDays('2026-09-08', -2)).toBe('2026-09-06');
+    expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
+    expect(addDays('2026-03-01', -1)).toBe('2026-02-28');
   });
 
   it('counts whole months between dates', () => {

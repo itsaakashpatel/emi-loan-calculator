@@ -6,6 +6,7 @@ import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { formatDate, parseISO, toISO } from '../lib/format/date';
 import { formatNumber, formatTenure, getCurrency, parseNumber } from '../lib/format/money';
+import { formatTime, parseTime } from '../lib/reminders';
 import { useCurrency } from '../store/settings';
 import { useTheme } from '../theme/ThemeProvider';
 import { IconGlyph, Label } from './primitives';
@@ -734,6 +735,100 @@ export function DateField({
               onChange={(_, date) => {
                 if (!date) return;
                 onChange(toISO({ year: date.getFullYear(), month: date.getMonth() + 1, day: date.getDate() }));
+              }}
+            />
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setOpen(false)}
+              style={[
+                styles.modalDone,
+                { backgroundColor: colors.accent, borderRadius: radius.md, paddingVertical: spacing.md },
+              ]}
+            >
+              <Label size="body" weight="semibold" align="center" style={{ color: colors.onAccent }}>
+                Done
+              </Label>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {hint ? (
+        <Label size="micro" tone="faint" style={{ marginTop: spacing.xs }}>
+          {hint}
+        </Label>
+      ) : null}
+    </View>
+  );
+}
+
+/* ------------------------------------------------------------ time field ---- */
+
+export function TimeField({
+  label,
+  value,
+  onChange,
+  hint,
+}: {
+  label: string;
+  /** `HH:MM` 24-hour clock. */
+  value: string;
+  onChange: (time: string) => void;
+  hint?: string;
+}) {
+  const { colors, radius, spacing, mode } = useTheme();
+  const [open, setOpen] = useState(false);
+  const [hour, minute] = parseTime(value);
+
+  return (
+    <View style={{ marginBottom: spacing.md }}>
+      <Label size="caption" tone="muted" style={{ marginBottom: spacing.xs }}>
+        {label}
+      </Label>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${formatTime(value)}`}
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [
+          styles.fieldBox,
+          {
+            backgroundColor: colors.surfaceAlt,
+            borderColor: colors.border,
+            borderRadius: radius.md,
+            paddingHorizontal: spacing.md,
+            paddingVertical: spacing.md + 1,
+            opacity: pressed ? 0.7 : 1,
+          },
+        ]}
+      >
+        <Label size="subhead" weight="semibold">
+          {formatTime(value)}
+        </Label>
+        <View style={styles.spacer} />
+        <IconGlyph name="time-outline" size={18} color={colors.textMuted} />
+      </Pressable>
+
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable style={[styles.modalBackdrop, { backgroundColor: colors.overlay }]} onPress={() => setOpen(false)}>
+          <Pressable
+            style={[
+              styles.modalCard,
+              { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg },
+            ]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Label size="subhead" weight="semibold" align="center">
+              {label}
+            </Label>
+            <DateTimePicker
+              value={new Date(2000, 0, 1, hour, minute)}
+              mode="time"
+              display="spinner"
+              themeVariant={mode}
+              onChange={(_, date) => {
+                if (!date) return;
+                const next = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                onChange(next);
               }}
             />
             <Pressable

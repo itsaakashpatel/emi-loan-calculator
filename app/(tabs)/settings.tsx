@@ -3,11 +3,10 @@ import { Alert, StyleSheet, View } from 'react-native';
 
 import { LargeTitleHeader } from '../../src/components/Header';
 import { Screen } from '../../src/components/Screen';
-import { NumberField, SegmentedControl } from '../../src/components/inputs';
-import { Button, Card, IconGlyph, Label, ListRow, SelectChipRow } from '../../src/components/primitives';
+import { NumberField, SegmentedControl, TimeField } from '../../src/components/inputs';
+import { Button, Card, IconGlyph, Label, ListRow } from '../../src/components/primitives';
 import { resetDatabase } from '../../src/db/client';
 import { COMPOUNDING_LABELS, type Compounding } from '../../src/lib/finance/deposits';
-import { CURRENCIES, currencyTag, formatMoney } from '../../src/lib/format/money';
 import { useCalculatorStore } from '../../src/store/calculator';
 import { useLoansStore } from '../../src/store/loans';
 import { useSettingsStore, type ThemePreference } from '../../src/store/settings';
@@ -18,8 +17,6 @@ const FD_COMPOUNDING: Compounding[] = ['monthly', 'quarterly', 'halfyearly', 'ye
 export default function SettingsScreen() {
   const { colors, spacing } = useTheme();
 
-  const currency = useSettingsStore((s) => s.currency);
-  const setCurrency = useSettingsStore((s) => s.setCurrency);
   const themePreference = useSettingsStore((s) => s.themePreference);
   const setThemePreference = useSettingsStore((s) => s.setThemePreference);
   const defaultRate = useSettingsStore((s) => s.defaultRate);
@@ -28,6 +25,8 @@ export default function SettingsScreen() {
   const setDefaultTenureYears = useSettingsStore((s) => s.setDefaultTenureYears);
   const defaultFdCompounding = useSettingsStore((s) => s.defaultFdCompounding);
   const setDefaultFdCompounding = useSettingsStore((s) => s.setDefaultFdCompounding);
+  const notificationTime = useSettingsStore((s) => s.notificationTime);
+  const setNotificationTime = useSettingsStore((s) => s.setNotificationTime);
 
   const loanCount = useLoansStore((s) => s.items.length);
   const refreshLoans = useLoansStore((s) => s.refresh);
@@ -35,7 +34,7 @@ export default function SettingsScreen() {
   const confirmClear = () =>
     Alert.alert(
       'Delete all saved data?',
-      'Every saved loan, payment record and cached exchange rate will be removed. Your settings are kept.',
+      'Every saved loan and payment record will be removed. Your settings are kept.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -59,24 +58,6 @@ export default function SettingsScreen() {
   return (
     <Screen floatingTabBar>
       <LargeTitleHeader title="Setting" />
-      <Card title="Currency">
-        <SelectChipRow
-          options={CURRENCIES.map((option) => ({
-            value: option.code,
-            label: currencyTag(option.code),
-            hint: option.name,
-          }))}
-          value={currency}
-          onChange={setCurrency}
-        />
-        <Label size="micro" tone="faint" style={{ marginTop: spacing.md }}>
-          Numbers are grouped {CURRENCIES.find((c) => c.code === currency)?.grouping === 'indian'
-            ? 'the Indian way'
-            : 'in thousands'}
-          , e.g. {formatMoney(12345678, { currency })}.
-        </Label>
-      </Card>
-
       <Card title="Appearance">
         <SegmentedControl<ThemePreference>
           segments={[
@@ -86,6 +67,15 @@ export default function SettingsScreen() {
           ]}
           value={themePreference}
           onChange={setThemePreference}
+        />
+      </Card>
+
+      <Card title="EMI reminders">
+        <TimeField
+          label="Reminder time"
+          value={notificationTime}
+          onChange={setNotificationTime}
+          hint="You get reminders three days before an EMI is due, and one after if it is unpaid."
         />
       </Card>
 

@@ -7,34 +7,35 @@ export type ThemePreference = 'system' | 'light' | 'dark';
 
 export interface SettingsState {
   hydrated: boolean;
-  currency: string;
   themePreference: ThemePreference;
   /** Seeds a fresh loan calculation. */
   defaultRate: number;
   defaultTenureYears: number;
   defaultFdCompounding: Compounding;
+  /** `HH:MM` 24-hour clock, the time of day EMI reminders fire. */
+  notificationTime: string;
   hydrate: () => Promise<void>;
-  setCurrency: (code: string) => void;
   setThemePreference: (preference: ThemePreference) => void;
   setDefaultRate: (rate: number) => void;
   setDefaultTenureYears: (years: number) => void;
   setDefaultFdCompounding: (compounding: Compounding) => void;
+  setNotificationTime: (time: string) => void;
 }
 
 const KEYS = {
-  currency: 'currency',
   theme: 'theme_preference',
   rate: 'default_rate',
   tenure: 'default_tenure_years',
   fdCompounding: 'default_fd_compounding',
+  notificationTime: 'notification_time',
 } as const;
 
 const DEFAULTS = {
-  currency: 'INR',
   themePreference: 'system' as ThemePreference,
   defaultRate: 8.5,
   defaultTenureYears: 20,
   defaultFdCompounding: 'quarterly' as Compounding,
+  notificationTime: '19:00',
 };
 
 function isThemePreference(value: string | undefined): value is ThemePreference {
@@ -49,6 +50,11 @@ function isCompounding(value: string | undefined): value is Compounding {
     value === 'yearly' ||
     value === 'simple'
   );
+}
+
+function isTime(value: string | undefined): value is string {
+  if (!value) return false;
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 }
 
 function numberOr(value: string | undefined, fallback: number): number {
@@ -71,12 +77,13 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       // Read into locals so the type guards actually narrow (re-indexing loses the narrowing).
       const theme = stored[KEYS.theme];
       const compounding = stored[KEYS.fdCompounding];
+      const notificationTime = stored[KEYS.notificationTime];
       set({
-        currency: stored[KEYS.currency] ?? DEFAULTS.currency,
         themePreference: isThemePreference(theme) ? theme : DEFAULTS.themePreference,
         defaultRate: numberOr(stored[KEYS.rate], DEFAULTS.defaultRate),
         defaultTenureYears: numberOr(stored[KEYS.tenure], DEFAULTS.defaultTenureYears),
         defaultFdCompounding: isCompounding(compounding) ? compounding : DEFAULTS.defaultFdCompounding,
+        notificationTime: isTime(notificationTime) ? notificationTime : DEFAULTS.notificationTime,
         hydrated: true,
       });
     } catch {
@@ -85,10 +92,6 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     }
   },
 
-  setCurrency: (code) => {
-    set({ currency: code });
-    persist(KEYS.currency, code);
-  },
   setThemePreference: (preference) => {
     set({ themePreference: preference });
     persist(KEYS.theme, preference);
@@ -105,7 +108,11 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     set({ defaultFdCompounding: compounding });
     persist(KEYS.fdCompounding, compounding);
   },
+  setNotificationTime: (time) => {
+    set({ notificationTime: time });
+    persist(KEYS.notificationTime, time);
+  },
 }));
 
-/** Currency code only — the most common selector, kept narrow to avoid needless re-renders. */
-export const useCurrency = () => useSettingsStore((s) => s.currency);
+/** INR is the only supported currency for now. */
+export const useCurrency = (): string => 'INR';

@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BackButton } from '../src/components/Header';
 import { GradientBackdrop } from '../src/components/Screen';
 import { getDb } from '../src/db/client';
+import { syncEmiReminders } from '../src/notifications';
 import { useCalculatorStore } from '../src/store/calculator';
 import { useLoansStore } from '../src/store/loans';
 import { useSettingsStore } from '../src/store/settings';
@@ -51,10 +52,26 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
+        <ReminderSync />
         <AppStack />
       </ThemeProvider>
     </SafeAreaProvider>
   );
+}
+
+/**
+ * Keeps the scheduled EMI reminders in step with the saved loans and the reminder time. The store
+ * items change identity on every refresh, so this effect re-runs after any loan or payment change.
+ */
+function ReminderSync() {
+  const items = useLoansStore((s) => s.items);
+  const notificationTime = useSettingsStore((s) => s.notificationTime);
+
+  useEffect(() => {
+    void syncEmiReminders(items, notificationTime);
+  }, [items, notificationTime]);
+
+  return null;
 }
 
 function AppStack() {
