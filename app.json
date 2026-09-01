@@ -2,7 +2,7 @@
   "expo": {
     "name": "EMI Calculator",
     "slug": "emi-loan-calculator",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "emicalc",
@@ -27,6 +27,7 @@
       "expo-router",
       "expo-sqlite",
       "expo-sharing",
+      "expo-notifications",
       "@react-native-community/datetimepicker",
       [
         "expo-splash-screen",

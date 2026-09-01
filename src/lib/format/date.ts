@@ -46,6 +46,14 @@ export function daysInMonth(year: number, month: number): number {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
+/** Adds days, keeping the calendar date so it never shifts under timezone conversion. */
+export function addDays(iso: string, days: number): string {
+  const { year, month, day } = parseISO(iso);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + days);
+  return toISO({ year: date.getUTCFullYear(), month: date.getUTCMonth() + 1, day: date.getUTCDate() });
+}
+
 /** Adds months, clamping the day to the target month's length (Jan 31 + 1mo -> Feb 28). */
 export function addMonths(iso: string, months: number): string {
   const { year, month, day } = parseISO(iso);

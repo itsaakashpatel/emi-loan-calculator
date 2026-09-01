@@ -1,7 +1,7 @@
 {
   "name": "emi-loan-calculator",
   "main": "expo-router/entry",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "scripts": {
     "start": "expo start",
@@ -23,6 +23,7 @@
     "expo-haptics": "~57.0.1",
     "expo-linear-gradient": "~57.0.1",
     "expo-linking": "~57.0.6",
+    "expo-notifications": "~57.0.15",
     "expo-print": "~57.0.1",
     "expo-router": "~57.0.13",
     "expo-sharing": "~57.0.12",

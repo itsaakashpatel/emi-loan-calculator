@@ -53,6 +53,8 @@ so the header, tab scene and screen content all sit on one continuous fade.
 - Floating-rate changes mid-loan
 - Side-by-side comparison of up to 3 scenarios, ranked by total outflow including fees
 - Saved loans with a payment log, progress rings, next-due and overdue tracking
+- EMI reminders — a local notification three days before an instalment is due, on the day, and one
+  after if it stays unpaid, at a time of day you choose (default 7:00 PM)
 
 **Banking** — FD, RD, PPF, simple and compound interest, Inflation Impact.
 
@@ -69,7 +71,7 @@ themselves to their measured container, so nothing clips or overflows.
 **Tools** — GST (add/remove, CGST/SGST or IGST), currency converter with offline-cached rates.
 
 **Everything else** — PDF export for loan summaries, schedules, comparisons and investment results;
-light/dark themes; INR with Indian digit grouping by default plus 13 other currencies.
+light/dark themes; INR with Indian digit grouping as the single display currency.
 
 ## Layout
 
@@ -126,5 +128,4 @@ differ slightly through day-count conventions.
 
 ## Deliberately out of scope
 
-Ads, in-app purchases and premium gating (the original is freemium; this is entirely free), and
-push/local notifications for due dates — the loan manager surfaces the next due date in-app instead.
+Ads, in-app purchases and premium gating (the original is freemium; this is entirely free).
