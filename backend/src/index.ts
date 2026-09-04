@@ -9,6 +9,7 @@ import { health } from './routes/health';
 import { holdings } from './routes/holdings';
 import { members } from './routes/members';
 import { prices } from './routes/prices';
+import { runDailyRefresh } from './scheduled';
 
 const app = new Hono<AppEnv>();
 
@@ -38,4 +39,5 @@ app.onError((err, c) => {
 
 export default {
   fetch: app.fetch,
+  scheduled: (_event, env, ctx) => ctx.waitUntil(runDailyRefresh(env)),
 } satisfies ExportedHandler<Env>;

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import type { AppEnv } from '../env';
 import { summarise, valueHolding, type Valued } from '../lib/valuation';
+import { yahooSymbol } from '../lib/yahoo';
 
 const mfSchema = z.object({
   memberId: z.string().uuid(),
@@ -277,7 +278,10 @@ holdings.post('/holdings/stock', async (c) => {
         id,
         data.memberId,
         userId,
-        data.symbol.toUpperCase(),
+        // Stored exchange-suffixed (RELIANCE -> RELIANCE.NS). It is the key
+        // the price cache is written under and joined on, and it keeps the
+        // NSE and BSE listings of one company apart.
+        yahooSymbol(data.symbol, data.exchange),
         data.exchange,
         data.stockName,
         data.quantity,
