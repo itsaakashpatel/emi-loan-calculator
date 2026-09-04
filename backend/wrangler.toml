@@ -1,0 +1,31 @@
+name = "emi-portfolio-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat"]
+
+# CAS parsing reads a whole PDF, which exceeds the 10ms CPU the free tier
+# allows. Workers Paid gives 30s of CPU per invocation.
+[limits]
+cpu_ms = 30000
+
+[[d1_databases]]
+binding = "DB"
+database_name = "emi-portfolio"
+database_id = "PLACEHOLDER_RUN_WRANGLER_D1_CREATE"
+migrations_dir = "src/db/migrations"
+
+[[r2_buckets]]
+binding = "CAS_BUCKET"
+bucket_name = "cas-uploads"
+
+# 02:00 UTC is 07:30 IST — after AMFI publishes the previous day's NAVs.
+[triggers]
+crons = ["0 2 * * *"]
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets are set with `wrangler secret put`, never committed:
+#   GOOGLE_CLIENT_ID  — the Google OAuth *web* client ID, used as the audience
+#                       when verifying ID tokens the app sends.
+#   JWT_SECRET        — random 32+ byte string signing our own session tokens.

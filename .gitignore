@@ -3,6 +3,10 @@
 # dependencies
 node_modules/
 
+# Cloudflare Workers backend
+backend/.wrangler/
+.dev.vars
+
 # Expo
 .expo/
 dist/
