@@ -9,6 +9,7 @@ import { BackButton } from '../src/components/Header';
 import { GradientBackdrop } from '../src/components/Screen';
 import { getDb } from '../src/db/client';
 import { syncEmiReminders } from '../src/notifications';
+import { useAuthStore } from '../src/store/auth';
 import { useCalculatorStore } from '../src/store/calculator';
 import { useLoansStore } from '../src/store/loans';
 import { useSettingsStore } from '../src/store/settings';
@@ -37,6 +38,9 @@ export default function RootLayout() {
         const { defaultRate, defaultTenureYears } = useSettingsStore.getState();
         useCalculatorStore.getState().seedDefaults({ annualRate: defaultRate, tenureYears: defaultTenureYears });
         await useLoansStore.getState().refresh();
+        // Only restores a stored session; it opens no network connection, so
+        // a signed-out or offline launch costs nothing.
+        await useAuthStore.getState().hydrate();
       } finally {
         if (!cancelled) setReady(true);
         await SplashScreen.hideAsync();

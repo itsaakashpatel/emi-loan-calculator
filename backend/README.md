@@ -45,6 +45,25 @@ pnpm deploy
 the iOS one. The app signs in with the iOS client and sends the resulting ID
 token here; Google issues that token with the web client as its audience.
 
+## Google sign-in
+
+Create both OAuth client IDs once, in the Google Cloud console under
+**APIs & Services → Credentials**:
+
+| Client type | Configure with | Goes in |
+| --- | --- | --- |
+| iOS | Bundle ID `com.aakashpatel.emicalculator` | `app.json` → `extra.googleIosClientId` |
+| Web | No redirect URIs needed | `app.json` → `extra.googleWebClientId`, and `wrangler secret put GOOGLE_CLIENT_ID` |
+
+Then set `extra.portfolioApiUrl` in `app.json` to this Worker's URL.
+
+Neither client ID is a secret — a public OAuth client ID is meant to ship
+inside the app. What protects the data is this API verifying the token, so the
+signing secret stays here and only here.
+
+Until all three values are filled in, the app's Portfolio tab explains that it
+is unconfigured rather than showing a sign-in button that cannot work.
+
 ## Local development
 
 ```sh

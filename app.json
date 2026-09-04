@@ -42,6 +42,8 @@
         }
       ],
       "expo-font",
+      "expo-web-browser",
+      "expo-secure-store",
       "./plugins/with-local-notifications-only"
     ],
     "experiments": {
@@ -53,7 +55,10 @@
       "router": {},
       "eas": {
         "projectId": "0b42d16e-2ac9-46d1-a85c-2feae6f2052d"
-      }
+      },
+      "portfolioApiUrl": "https://emi-portfolio-api.itsaakashpatel.workers.dev",
+      "googleIosClientId": "",
+      "googleWebClientId": ""
     },
     "owner": "itsaakashpatel",
     "runtimeVersion": {
