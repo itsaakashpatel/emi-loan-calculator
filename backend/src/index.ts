@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import type { AppEnv, Env } from './env';
 import { requireAuth } from './middleware/auth';
 import { auth } from './routes/auth';
+import { cas } from './routes/cas';
 import { health } from './routes/health';
 import { holdings } from './routes/holdings';
 import { members } from './routes/members';
@@ -26,6 +27,7 @@ for (const group of ['members', 'holdings', 'prices', 'schemes', 'cas']) {
 app.route('/', members);
 app.route('/', holdings);
 app.route('/', prices);
+app.route('/', cas);
 
 app.notFound((c) => c.json({ error: 'not_found' }, 404));
 

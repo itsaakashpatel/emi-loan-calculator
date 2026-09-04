@@ -74,3 +74,41 @@ export async function fetchNavAll(wanted?: ReadonlySet<string>): Promise<AmfiNav
 
   return parseNavAll(await response.text(), wanted);
 }
+
+/**
+ * ISIN to scheme code, built from the same file.
+ *
+ * A CAS identifies each holding by ISIN; everything else here works in AMFI
+ * scheme codes. This is the only bridge between the two, and the file is the
+ * only free source that carries both. Growth and reinvestment plans have
+ * separate ISINs pointing at one scheme, so both columns are indexed.
+ */
+export function parseIsinIndex(text: string): Map<string, { amfiCode: string; schemeName: string }> {
+  const index = new Map<string, { amfiCode: string; schemeName: string }>();
+
+  for (const line of text.split('\n')) {
+    const fields = line.split(';');
+    if (fields.length < 6) continue;
+
+    const amfiCode = fields[0]!.trim();
+    if (!/^\d+$/.test(amfiCode)) continue;
+
+    const schemeName = fields[3]!.trim();
+    if (!schemeName) continue;
+
+    for (const column of [fields[1]!, fields[2]!]) {
+      const isin = column.trim().toUpperCase();
+      // Absent ISINs are written '-'; real ones are 12 alphanumerics.
+      if (/^[A-Z0-9]{12}$/.test(isin)) index.set(isin, { amfiCode, schemeName });
+    }
+  }
+
+  return index;
+}
+
+export async function fetchIsinIndex(): Promise<Map<string, { amfiCode: string; schemeName: string }>> {
+  const response = await fetch(NAV_ALL_URL);
+  if (!response.ok) throw new Error(`amfi fetch failed: ${response.status}`);
+
+  return parseIsinIndex(await response.text());
+}
