@@ -364,6 +364,8 @@ interface ListRowProps {
   icon?: keyof typeof Ionicons.glyphMap;
   iconColor?: string;
   onPress?: () => void;
+  /** Secondary action, conventionally a destructive one behind a confirmation. */
+  onLongPress?: () => void;
   right?: ReactNode;
   last?: boolean;
 }
@@ -375,6 +377,7 @@ export function ListRow({
   icon,
   iconColor,
   onPress,
+  onLongPress,
   right,
   last,
 }: ListRowProps) {
@@ -418,11 +421,19 @@ export function ListRow({
     </View>
   );
 
-  if (!onPress) return content;
+  if (!onPress && !onLongPress) return content;
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
+      onLongPress={
+        onLongPress
+          ? () => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onLongPress();
+            }
+          : undefined
+      }
       style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
     >
       {content}

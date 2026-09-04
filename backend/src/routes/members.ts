@@ -77,8 +77,13 @@ members.put('/members/:id', async (c) => {
   const { name, relation, panHash, sortOrder } = parsed.data;
   // Matching on user_id as well as id is what stops one user editing
   // another's member by guessing an id.
+  //
+  // COALESCE on pan_hash: the app only ever holds the PAN while it is being
+  // typed, never afterwards, so an edit that leaves the field blank means
+  // "unchanged" rather than "clear it".
   const result = await c.env.DB.prepare(
-    `UPDATE members SET name = ?, relation = ?, pan_hash = ?, sort_order = ?, updated_at = ?
+    `UPDATE members
+     SET name = ?, relation = ?, pan_hash = COALESCE(?, pan_hash), sort_order = ?, updated_at = ?
      WHERE id = ? AND user_id = ?`,
   )
     .bind(

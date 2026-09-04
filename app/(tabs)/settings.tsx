@@ -7,6 +7,8 @@ import { NumberField, SegmentedControl, TimeField } from '../../src/components/i
 import { Button, Card, IconGlyph, Label, ListRow } from '../../src/components/primitives';
 import { resetDatabase } from '../../src/db/client';
 import { COMPOUNDING_LABELS, type Compounding } from '../../src/lib/finance/deposits';
+import { portfolioConfigured } from '../../src/lib/config';
+import { useAuthStore } from '../../src/store/auth';
 import { useCalculatorStore } from '../../src/store/calculator';
 import { useLoansStore } from '../../src/store/loans';
 import { useSettingsStore, type ThemePreference } from '../../src/store/settings';
@@ -115,6 +117,8 @@ export default function SettingsScreen() {
         />
       </Card>
 
+      <PortfolioAccountCard />
+
       <Card title="Data" padded={false}>
         <ListRow
           title="Saved loans"
@@ -140,6 +144,58 @@ export default function SettingsScreen() {
         </Label>
       </View>
     </Screen>
+  );
+}
+
+/**
+ * The portfolio account, and the only place to sign out.
+ *
+ * Hidden entirely when this build has no portfolio service configured, so an
+ * unconfigured build shows no dead controls.
+ */
+function PortfolioAccountCard() {
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
+
+  if (!portfolioConfigured) return null;
+
+  if (!user) {
+    return (
+      <Card title="Portfolio" padded={false}>
+        <ListRow
+          title="Not signed in"
+          subtitle="Sign in on the Portfolio tab to sync holdings"
+          icon="person-circle-outline"
+          last
+        />
+      </Card>
+    );
+  }
+
+  const confirmSignOut = () =>
+    Alert.alert(
+      'Sign out?',
+      'Your portfolio stays in your account. The copy saved on this device is removed.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign out', style: 'destructive', onPress: () => void signOut() },
+      ],
+    );
+
+  return (
+    <Card title="Portfolio" padded={false}>
+      <ListRow
+        title={user.name ?? 'Signed in'}
+        subtitle={user.email}
+        icon="person-circle-outline"
+      />
+      <ListRow
+        title="Holdings"
+        value="This device and your account"
+        icon="cloud-done-outline"
+      />
+      <ListRow title="Sign out" icon="log-out-outline" onPress={confirmSignOut} last />
+    </Card>
   );
 }
 

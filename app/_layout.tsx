@@ -129,6 +129,16 @@ function AppStack() {
         <Stack.Screen name="loan/[id]" options={{ title: 'Loan' }} />
         <Stack.Screen name="invest/[type]" options={{ title: 'Calculator' }} />
         <Stack.Screen name="tools/eligibility" options={{ title: 'Loan Eligibility' }} />
+        <Stack.Screen name="portfolio/member/[id]" options={{ title: 'Holdings' }} />
+        <Stack.Screen
+          name="portfolio/member-form"
+          options={{ title: 'Family Member', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="portfolio/holding-form"
+          options={{ title: 'Holding', presentation: 'modal' }}
+        />
+        <Stack.Screen name="portfolio/cas-upload" options={{ title: 'Import Statement' }} />
         <Stack.Screen name="history" options={{ title: 'History' }} />
       </Stack>
       </NavThemeProvider>
