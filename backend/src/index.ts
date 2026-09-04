@@ -5,6 +5,9 @@ import type { AppEnv, Env } from './env';
 import { requireAuth } from './middleware/auth';
 import { auth } from './routes/auth';
 import { health } from './routes/health';
+import { holdings } from './routes/holdings';
+import { members } from './routes/members';
+import { prices } from './routes/prices';
 
 const app = new Hono<AppEnv>();
 
@@ -19,6 +22,10 @@ for (const group of ['members', 'holdings', 'prices', 'schemes', 'cas']) {
   app.use(`/${group}`, requireAuth);
   app.use(`/${group}/*`, requireAuth);
 }
+
+app.route('/', members);
+app.route('/', holdings);
+app.route('/', prices);
 
 app.notFound((c) => c.json({ error: 'not_found' }, 404));
 
