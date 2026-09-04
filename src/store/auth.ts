@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { clearCache } from '../db/portfolio';
 import { loadSession, signInWithGoogle, signOut, type AuthUser } from '../lib/auth';
 
 export interface AuthState {
@@ -47,6 +48,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signOut: async () => {
     await signOut();
+    // The cached portfolio belongs to the account that fetched it, so it goes
+    // with the session rather than waiting for the next sign-in to replace it.
+    await clearCache().catch(() => undefined);
     set({ user: null, token: null, error: null });
   },
 
