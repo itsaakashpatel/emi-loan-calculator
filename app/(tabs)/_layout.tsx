@@ -16,7 +16,6 @@ const TABS: ReadonlyArray<{
   { name: 'index', label: 'Home', icon: 'home-outline', activeIcon: 'home' },
   { name: 'banking', label: 'Banking', icon: 'business-outline', activeIcon: 'business' },
   { name: 'sip', label: 'SIP', icon: 'leaf-outline', activeIcon: 'leaf' },
-  { name: 'other', label: 'Other', icon: 'calculator-outline', activeIcon: 'calculator' },
   { name: 'settings', label: 'Setting', icon: 'settings-outline', activeIcon: 'settings' },
 ];
 

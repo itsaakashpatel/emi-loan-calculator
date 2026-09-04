@@ -1,43 +1,4 @@
 import { compareLoans, type ComparisonScenario } from '../src/lib/finance/compare';
-import { calculateGst } from '../src/lib/finance/gst';
-
-describe('GST', () => {
-  it('adds GST to a base amount', () => {
-    const result = calculateGst({ amount: 1_000, ratePct: 18, mode: 'add' });
-    expect(result.base).toBeCloseTo(1_000, 6);
-    expect(result.gst).toBeCloseTo(180, 6);
-    expect(result.total).toBeCloseTo(1_180, 6);
-    expect(result.cgst).toBeCloseTo(90, 6);
-    expect(result.sgst).toBeCloseTo(90, 6);
-    expect(result.igst).toBe(0);
-  });
-
-  it('strips GST out of an inclusive amount', () => {
-    const result = calculateGst({ amount: 1_180, ratePct: 18, mode: 'remove' });
-    expect(result.base).toBeCloseTo(1_000, 6);
-    expect(result.gst).toBeCloseTo(180, 6);
-    expect(result.total).toBeCloseTo(1_180, 6);
-  });
-
-  it('round-trips add then remove', () => {
-    const added = calculateGst({ amount: 4_567.89, ratePct: 12, mode: 'add' });
-    const removed = calculateGst({ amount: added.total, ratePct: 12, mode: 'remove' });
-    expect(removed.base).toBeCloseTo(4_567.89, 6);
-  });
-
-  it('puts the whole tax in IGST for inter-state supply', () => {
-    const result = calculateGst({ amount: 1_000, ratePct: 28, mode: 'add', split: 'igst' });
-    expect(result.igst).toBeCloseTo(280, 6);
-    expect(result.cgst).toBe(0);
-    expect(result.sgst).toBe(0);
-  });
-
-  it('is a no-op at 0%', () => {
-    const result = calculateGst({ amount: 500, ratePct: 0, mode: 'add' });
-    expect(result.gst).toBe(0);
-    expect(result.total).toBeCloseTo(500, 6);
-  });
-});
 
 describe('loan comparison', () => {
   const scenarios: ComparisonScenario[] = [

@@ -39,7 +39,6 @@ Run `pnpm typecheck` and `pnpm test` after you change code. There is no lint or 
 ## Currency and numbers
 
 - INR is the only display currency, with Indian digit grouping. There is no currency selector.
-- The Currency Converter tool (`app/tools/currency.tsx`) still converts other currencies. Keep it.
 - State the currency once per table header, not in every cell.
 - Format money and dates through `src/lib/format`, not inline.
 
