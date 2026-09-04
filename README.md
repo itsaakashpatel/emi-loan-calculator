@@ -3,8 +3,9 @@
 An iOS app for working out loan EMIs, tracking repayments, and planning investments — a functional
 clone of *EMI Calculator : Loan Manager* built with Expo SDK 57.
 
-Everything runs on-device. The only network call in the app is the exchange-rate lookup for the
-currency converter.
+Every calculation runs on-device, and the calculators need no account and no network. The Portfolio
+tab is the exception: it signs in with Google and syncs holdings through a Cloudflare Worker
+(`backend/`), keeping a local copy so it still shows your figures offline.
 
 ## Running it
 
@@ -62,13 +63,16 @@ so the header, tab scene and screen content all sit on one continuous fade.
 calculators are driven from one declarative registry (`src/lib/finance/calculators.ts`) rendered by a
 single screen, so adding one is a registry entry rather than a new screen.
 
-**Other** — GST calculator, currency converter.
+**Portfolio** — family mutual fund and stock holdings, valued daily. Each person is tracked
+separately. Holdings are added by hand or imported in bulk from a Consolidated Account Statement,
+the PDF CAMS and KFintech email out. NAVs come from AMFI and stock prices from Yahoo Finance,
+refreshed once a day by a Cloudflare Worker (`backend/`) that also holds the data, so a portfolio
+follows you between devices. It is the one part of the app that needs an account; everything else
+works offline.
 
 Data tables show **full amounts** with the currency stated once per table rather than in every cell —
 that is what lets four columns of real numbers fit a phone without horizontal scrolling. Charts size
 themselves to their measured container, so nothing clips or overflows.
-
-**Tools** — GST (add/remove, CGST/SGST or IGST), currency converter with offline-cached rates.
 
 **Everything else** — PDF export for loan summaries, schedules, comparisons and investment results;
 light/dark themes; INR with Indian digit grouping as the single display currency.
@@ -77,20 +81,24 @@ light/dark themes; INR with Indian digit grouping as the single display currency
 
 ```
 app/                     expo-router routes
-  (tabs)/                EMI · My Loans · Invest · Tools
+  (tabs)/                Home · Banking · SIP · Portfolio · Setting
   emi/                   schedule, advanced options
   loan/                  [id] detail, form (create/edit)
-  invest/[type].tsx      one screen driving all 8 calculators
-  tools/                 gst, currency
+  invest/[type].tsx      one screen driving all 11 calculators
+  portfolio/             member detail, member and holding forms, CAS import
+  tools/eligibility.tsx  loan eligibility
 src/
   lib/finance/           amortisation engine + every calculator (pure TS, no RN imports)
   lib/format/            money and date formatting
   lib/fx.ts              exchange rates with cache fallback
+  lib/api/               typed client for the portfolio service
+  lib/auth.ts            Google sign-in, session token in the Keychain
   db/                    SQLite client, migrations, repositories
-  store/                 zustand: settings, calculator, loans
+  store/                 zustand: settings, calculator, loans, auth, portfolio
   components/            theme-aware UI kit, charts (react-native-svg), schedule table
   pdf/                   HTML templates + share
-__tests__/               finance, deposits, investments, format, tools, db, pdf
+backend/                 Cloudflare Worker: portfolio data, CAS parsing, daily prices
+__tests__/               finance, deposits, investments, format, db, pdf, portfolio cache
 ```
 
 `src/lib/finance` is the single source of truth for every number the UI and PDFs show, and is pure

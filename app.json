@@ -49,7 +49,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "description": "Loan EMI, amortisation, part payment, deposits, SIP and everyday calculators. Everything is worked out on the device.",
+    "description": "Loan EMI, amortisation, part payment, deposits and SIP calculators, plus a family portfolio of mutual funds and stocks valued daily. Every calculation is worked out on the device.",
     "primaryColor": "#1E78AE",
     "extra": {
       "router": {},
