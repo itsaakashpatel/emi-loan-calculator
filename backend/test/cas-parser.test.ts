@@ -1,45 +1,39 @@
 import { describe, expect, it } from 'vitest';
 
 import { parseIsinIndex } from '../src/lib/amfi';
-import { parseCasText, resolveCasHoldings } from '../src/lib/cas-parser';
+import { groundHoldings, parseCasMarkdown, resolveCasHoldings } from '../src/lib/cas-parser';
+import type { Env } from '../src/env';
 
-// Shaped like text pulled out of a real CAS: two folios, three schemes, one of
-// them fully redeemed, plus the headers and disclaimers that surround them.
-const SAMPLE = `
-CONSOLIDATED ACCOUNT STATEMENT
-CAMS/KFintech · 01-Apr-2026 to 31-Aug-2026
+/**
+ * The model is replaced by a stub. These tests do not check that a model can
+ * read a statement. They check that a wrong answer cannot get into the
+ * portfolio.
+ */
 
-Folio No: 12345678 / 90    PAN: ABCDE1234F   KYC: OK
+const MARKDOWN = `
+# CONSOLIDATED ACCOUNT STATEMENT
+01-Apr-2026 to 31-Aug-2026
 
-HDFC Flexi Cap Fund - Growth (Advisor: DIRECT)
-ISIN: INF179K01YV8    Registrar : CAMS
-Opening Unit Balance: 0.000
-Date        Transaction      Amount        Units      NAV       Balance
-01-Apr-2026 Purchase         100,000.00    62.500     1600.00   62.500
-01-Jul-2026 Purchase         300,000.00    188.000    1595.74   250.500
+**Folio No: 12345678 / 90**  PAN: ABCDE1234F
+
+## HDFC Flexi Cap Fund - Growth
+ISIN: INF179K01YV8
+
+| Date | Transaction | Amount | Units | NAV | Balance |
+| --- | --- | --- | --- | --- | --- |
+| 01-Apr-2026 | Purchase | 100,000.00 | 62.500 | 1600.00 | 62.500 |
+| 01-Jul-2026 | Purchase | 300,000.00 | 188.000 | 1595.74 | 250.500 |
+
 Closing Unit Balance: 250.500
 NAV on 31-Aug-2026: INR 1,789.4560
 Market Value on 31-Aug-2026: INR 448,254.42
 
-Aditya Birla Sun Life Liquid Fund - Growth Plan
+## Aditya Birla Sun Life Liquid Fund - Growth Plan
 ISIN: INF209K01YM2
-Opening Unit Balance: 0.000
-01-May-2026 Purchase         50,000.00     124.700    401.00    124.700
+
 Closing Unit Balance: 124.700
 NAV on 31-Aug-2026: INR 412.8000
 Market Value on 31-Aug-2026: INR 51,476.16
-
-Folio No: 87654321 / 11    PAN: ABCDE1234F
-
-SBI Small Cap Fund - Regular Plan
-ISIN: INF200K01YZ1
-Opening Unit Balance: 40.000
-10-Jun-2026 Redemption      -60,000.00    -40.000    1500.00   0.000
-Closing Unit Balance: 0.000
-NAV on 31-Aug-2026: INR 1,520.0000
-
-This statement is for information purposes only.
-Page 1 of 1
 `;
 
 const AMFI_SAMPLE = `Scheme Code;ISIN Div Payout/ISIN Growth;ISIN Div Reinvestment;Scheme Name;Net Asset Value;Date
@@ -47,87 +41,205 @@ const AMFI_SAMPLE = `Scheme Code;ISIN Div Payout/ISIN Growth;ISIN Div Reinvestme
 119551;INF209K01YM2;INF209K01YN0;Aditya Birla Sun Life Liquid Fund - Growth;412.8;31-Aug-2026
 `;
 
-/**
- * What extraction actually returns: one line. Page line breaks are drawing
- * instructions, not characters, so they do not survive. The parser must read
- * this as well as the laid-out form above.
- */
-const FLATTENED = SAMPLE.replace(/\s+/g, ' ').trim();
+/** A true reading of the markdown above. */
+const HONEST = [
+  {
+    isin: 'INF179K01YV8',
+    schemeName: 'HDFC Flexi Cap Fund - Growth',
+    folioNumber: '12345678/90',
+    units: 250.5,
+    marketValue: 448254.42,
+    navOnDate: 1789.456,
+  },
+  {
+    isin: 'INF209K01YM2',
+    schemeName: 'Aditya Birla Sun Life Liquid Fund - Growth Plan',
+    folioNumber: '12345678/90',
+    units: 124.7,
+    marketValue: 51476.16,
+    navOnDate: 412.8,
+  },
+];
 
-describe('parseCasText', () => {
-  const holdings = parseCasText(SAMPLE);
+describe('groundHoldings', () => {
+  it('keeps a reading that the document supports', () => {
+    const { holdings, rejected } = groundHoldings(HONEST, MARKDOWN);
 
-  it('reads the schemes that still hold units', () => {
+    expect(rejected).toBe(0);
     expect(holdings).toHaveLength(2);
-    expect(holdings.map((h) => h.isin)).toEqual(['INF179K01YV8', 'INF209K01YM2']);
-  });
-
-  it('takes units from the closing balance, not a transaction row', () => {
     expect(holdings[0]?.units).toBe(250.5);
-    expect(holdings[1]?.units).toBe(124.7);
-  });
-
-  it('reads values with thousands separators', () => {
     expect(holdings[0]?.marketValue).toBe(448_254.42);
-    expect(holdings[0]?.navOnDate).toBe(1_789.456);
+    expect(holdings[1]?.isin).toBe('INF209K01YM2');
   });
 
-  it('drops a fully redeemed scheme', () => {
-    expect(holdings.some((h) => h.isin === 'INF200K01YZ1')).toBe(false);
+  it('drops a holding with invented units', () => {
+    // 999.999 is not in the statement.
+    const { holdings, rejected } = groundHoldings([{ ...HONEST[0], units: 999.999 }, HONEST[1]], MARKDOWN);
+
+    expect(rejected).toBe(1);
+    expect(holdings.map((h) => h.isin)).toEqual(['INF209K01YM2']);
   });
 
-  it('attaches each scheme to the folio it sits under', () => {
-    expect(holdings[0]?.folioNumber).toBe('12345678/90');
-    expect(holdings[1]?.folioNumber).toBe('12345678/90');
+  it('drops a holding with an invented market value', () => {
+    const { holdings, rejected } = groundHoldings([{ ...HONEST[0], marketValue: 500_000 }], MARKDOWN);
+
+    expect(holdings).toHaveLength(0);
+    expect(rejected).toBe(1);
   });
 
-  it('cleans the advisor tag out of the scheme name', () => {
-    expect(holdings[0]?.schemeName).toBe('HDFC Flexi Cap Fund - Growth');
+  it('drops a NAV that is one digit wrong', () => {
+    // The dangerous case: the value looks normal.
+    const { holdings } = groundHoldings([{ ...HONEST[0], navOnDate: 1789.457 }], MARKDOWN);
+
+    expect(holdings).toHaveLength(0);
   });
 
-  it('returns nothing for text that is not a statement', () => {
-    expect(parseCasText('')).toEqual([]);
-    expect(parseCasText('Dear investor,\nThank you for your business.')).toEqual([]);
+  it('drops a scheme that the statement does not mention', () => {
+    const invented = {
+      ...HONEST[0],
+      isin: 'INF999X01ZZ9',
+      schemeName: 'Imaginary Growth Fund',
+    };
+    const { holdings, rejected } = groundHoldings([invented], MARKDOWN);
+
+    expect(holdings).toHaveLength(0);
+    expect(rejected).toBe(1);
   });
 
-  it('reads the same holdings when every line break is gone', () => {
-    expect(parseCasText(FLATTENED)).toEqual(holdings);
+  it('drops a holding under a folio that is not in the statement', () => {
+    const { holdings } = groundHoldings([{ ...HONEST[0], folioNumber: '87654321/11' }], MARKDOWN);
+
+    expect(holdings).toHaveLength(0);
   });
 
-  it('skips a scheme whose closing balance cannot be read', () => {
-    const damaged = SAMPLE.replace('Closing Unit Balance: 250.500', 'Closing Unit Balance:');
-    expect(parseCasText(damaged)).toHaveLength(1);
-  });
-
-  it('keeps one row when a scheme repeats within a folio', () => {
-    const repeated = SAMPLE.replace(
-      'Folio No: 87654321 / 11    PAN: ABCDE1234F',
-      `HDFC Flexi Cap Fund - Growth
-ISIN: INF179K01YV8
-Closing Unit Balance: 250.500
-NAV on 31-Aug-2026: INR 1,789.4560
-
-Folio No: 87654321 / 11    PAN: ABCDE1234F`,
+  it('accepts a scheme name that is worded a little differently', () => {
+    const { holdings } = groundHoldings(
+      [{ ...HONEST[0], schemeName: 'HDFC Flexi Cap Fund (Growth)' }],
+      MARKDOWN,
     );
-    expect(parseCasText(repeated).filter((h) => h.isin === 'INF179K01YV8')).toHaveLength(1);
+
+    expect(holdings).toHaveLength(1);
+  });
+
+  it('accepts units written with different precision', () => {
+    // The statement says 250.500. The value 250.5 is the same number.
+    const { holdings } = groundHoldings([{ ...HONEST[0], units: 250.5 }], MARKDOWN);
+
+    expect(holdings[0]?.units).toBe(250.5);
+  });
+
+  it('reads numbers that the model returned as formatted strings', () => {
+    const { holdings } = groundHoldings(
+      [{ ...HONEST[0], units: '250.500', marketValue: '448,254.42' }],
+      MARKDOWN,
+    );
+
+    expect(holdings).toHaveLength(1);
+    expect(holdings[0]?.units).toBe(250.5);
+    expect(holdings[0]?.marketValue).toBe(448_254.42);
+  });
+
+  it('allows a null market value and NAV', () => {
+    const { holdings } = groundHoldings(
+      [{ ...HONEST[0], marketValue: null, navOnDate: null }],
+      MARKDOWN,
+    );
+
+    expect(holdings).toHaveLength(1);
+    expect(holdings[0]?.marketValue).toBeNull();
+  });
+
+  it('skips a redeemed scheme without counting it as rejected', () => {
+    const { holdings, rejected } = groundHoldings([{ ...HONEST[0], units: 0 }], MARKDOWN);
+
+    expect(holdings).toHaveLength(0);
+    expect(rejected).toBe(0);
+  });
+
+  it('drops a malformed ISIN', () => {
+    const { holdings, rejected } = groundHoldings([{ ...HONEST[0], isin: 'NOT-AN-ISIN' }], MARKDOWN);
+
+    expect(holdings).toHaveLength(0);
+    expect(rejected).toBe(1);
+  });
+
+  it('keeps one row when the model repeats a scheme', () => {
+    const { holdings } = groundHoldings([HONEST[0], HONEST[0]], MARKDOWN);
+
+    expect(holdings).toHaveLength(1);
+  });
+
+  it('returns nothing for a reply that is not a list', () => {
+    expect(groundHoldings(null, MARKDOWN)).toEqual({ holdings: [], rejected: 0 });
+    expect(groundHoldings({ holdings: [] }, MARKDOWN)).toEqual({ holdings: [], rejected: 0 });
+  });
+
+  it('drops a row that is not an object', () => {
+    const { holdings, rejected } = groundHoldings([null, 'text', 7], MARKDOWN);
+
+    expect(holdings).toHaveLength(0);
+    expect(rejected).toBe(3);
+  });
+});
+
+/** Stands in for the AI binding and returns what the test says. */
+function envReplying(response: unknown): Env {
+  return { AI: { run: async () => ({ response }) } } as unknown as Env;
+}
+
+describe('parseCasMarkdown', () => {
+  it('reads a JSON string reply', async () => {
+    const env = envReplying(JSON.stringify({ holdings: HONEST }));
+    const { holdings } = await parseCasMarkdown(env, MARKDOWN);
+
+    expect(holdings).toHaveLength(2);
+  });
+
+  it('reads a reply that is already an object', async () => {
+    const { holdings } = await parseCasMarkdown(envReplying({ holdings: HONEST }), MARKDOWN);
+
+    expect(holdings).toHaveLength(2);
+  });
+
+  it('reads JSON inside a code fence', async () => {
+    const fenced = `Here you go:\n\`\`\`json\n${JSON.stringify({ holdings: HONEST })}\n\`\`\``;
+    const { holdings } = await parseCasMarkdown(envReplying(fenced), MARKDOWN);
+
+    expect(holdings).toHaveLength(2);
+  });
+
+  it('applies the guard to what the model returns', async () => {
+    const env = envReplying(JSON.stringify({ holdings: [{ ...HONEST[0], units: 999.999 }] }));
+    const { holdings, rejected } = await parseCasMarkdown(env, MARKDOWN);
+
+    expect(holdings).toHaveLength(0);
+    expect(rejected).toBe(1);
+  });
+
+  it('returns nothing, and does not throw, for an unusable reply', async () => {
+    await expect(parseCasMarkdown(envReplying('I cannot help'), MARKDOWN)).resolves.toEqual({
+      holdings: [],
+      rejected: 0,
+    });
   });
 });
 
 describe('resolveCasHoldings', () => {
   it('maps ISINs to AMFI codes', () => {
-    const resolved = resolveCasHoldings(parseCasText(SAMPLE), parseIsinIndex(AMFI_SAMPLE));
+    const resolved = resolveCasHoldings(HONEST, parseIsinIndex(AMFI_SAMPLE));
 
     expect(resolved[0]?.amfiCode).toBe('120503');
     expect(resolved[1]?.amfiCode).toBe('119551');
   });
 
-  it('keeps the statement wording, not AMFI phrasing', () => {
-    const resolved = resolveCasHoldings(parseCasText(SAMPLE), parseIsinIndex(AMFI_SAMPLE));
+  it('keeps the statement name, not the AMFI name', () => {
+    const resolved = resolveCasHoldings(HONEST, parseIsinIndex(AMFI_SAMPLE));
+
     expect(resolved[0]?.schemeName).toBe('HDFC Flexi Cap Fund - Growth');
   });
 
-  it('keeps a holding whose ISIN AMFI does not list, with a null code', () => {
-    const resolved = resolveCasHoldings(parseCasText(SAMPLE), new Map());
+  it('keeps a holding that AMFI does not list, with a null code', () => {
+    const resolved = resolveCasHoldings(HONEST, new Map());
 
     expect(resolved).toHaveLength(2);
     expect(resolved[0]?.amfiCode).toBeNull();
@@ -135,7 +247,7 @@ describe('resolveCasHoldings', () => {
 });
 
 describe('parseIsinIndex', () => {
-  it('indexes both the growth and reinvestment ISINs', () => {
+  it('indexes the growth and the reinvestment ISIN', () => {
     const index = parseIsinIndex(AMFI_SAMPLE);
 
     expect(index.get('INF209K01YM2')?.amfiCode).toBe('119551');

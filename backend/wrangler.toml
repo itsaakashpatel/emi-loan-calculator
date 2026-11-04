@@ -3,10 +3,14 @@ main = "src/index.ts"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat"]
 
-# CAS parsing reads a whole PDF, which exceeds the 10ms CPU the free tier
-# allows. Workers Paid gives 30s of CPU per invocation.
+# Most of a CAS import waits on Workers AI, which does not count as CPU here.
+# The higher limit stays as a margin for the AMFI parse in the daily cron.
 [limits]
 cpu_ms = 30000
+
+# Converts an uploaded statement to markdown and reads the holdings from it.
+[ai]
+binding = "AI"
 
 [[d1_databases]]
 binding = "DB"

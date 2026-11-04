@@ -5,7 +5,7 @@ import type { AppEnv } from '../env';
 import { fetchIsinIndex } from '../lib/amfi';
 import {
   extractPdfText,
-  parseCasText,
+  parseCasMarkdown,
   resolveCasHoldings,
   type ResolvedCasHolding,
 } from '../lib/cas-parser';
@@ -38,6 +38,12 @@ async function isinIndexOrEmpty(): Promise<
     console.error('isin index unavailable', error);
     return new Map();
   }
+}
+
+/** The converter takes a name with the bytes. It only labels the result. */
+function asFileName(value: unknown): string {
+  const name = typeof value === 'string' ? value.trim() : '';
+  return name.length > 0 && name.length <= 200 ? name : 'statement.pdf';
 }
 
 export const cas = new Hono<AppEnv>();
@@ -78,11 +84,19 @@ cas.post('/cas/upload', async (c) => {
     .run();
 
   try {
-    const text = await extractPdfText(bytes);
-    const parsed = parseCasText(text);
+    const markdown = await extractPdfText(c.env, bytes, asFileName((file as { name?: unknown }).name));
+    const { holdings: parsed, rejected } = await parseCasMarkdown(c.env, markdown);
+
     if (parsed.length === 0) {
-      throw new Error('no holdings found — is this a mutual fund CAS?');
+      throw new Error(
+        rejected > 0
+          ? 'the holdings in this statement could not be read reliably'
+          : 'no holdings found — is this a mutual fund CAS?',
+      );
     }
+    // Rows were read but the document did not support them. Log it: if most
+    // rows are lost, the reading went wrong, and we need to know.
+    if (rejected > 0) console.warn(`cas ${uploadId}: dropped ${rejected} unverifiable row(s)`);
 
     // Resolution is best-effort. AMFI being unreachable must not throw away a
     // statement that parsed cleanly: the holdings are still worth showing, and

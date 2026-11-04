@@ -1,182 +1,219 @@
+import type { Env } from '../env';
+import { containsLoosely, isGrounded, isNameGrounded, numbersIn } from './grounding';
+
 /**
- * Reads a Consolidated Account Statement.
+ * Reads a Consolidated Account Statement (CAS).
  *
- * A CAS is the statement CAMS and KFintech email an investor covering every
- * mutual fund folio held against one PAN. With MFCentral shut down in
- * September 2025 it is the only way left to import a whole portfolio at once.
+ * A CAS is the statement that CAMS and KFintech email to an investor. It
+ * covers every mutual fund folio held against one PAN. MFCentral shut down in
+ * September 2025, so a CAS is now the only way to import a full portfolio.
  *
- * A statement is a run of folio blocks, each holding one or more schemes:
+ * There are two registrars, each with more than one layout, and they change
+ * them without notice. So this does not match a layout. It converts the PDF
+ * to markdown and asks a model to read it into a fixed JSON schema.
  *
- *   Folio No: 12345678 / 90    PAN: ABCDE1234F
- *   HDFC Flexi Cap Fund - Growth (Advisor: DIRECT)
- *   ISIN: INF179K01YV8
- *   ... transaction rows ...
- *   Closing Unit Balance: 250.500
- *   NAV on 31-Aug-2026: INR 1,789.4560
- *   Market Value on 31-Aug-2026: INR 448,254.42
- *
- * That layout is how the page *looks*, not what comes out of it. Extracting
- * text from a PDF frequently returns the whole statement as a single line,
- * because line breaks on the page are drawing instructions rather than
- * characters. So this works on character offsets into one normalised string
- * and never on lines: it locates each ISIN, bounds a block by the next ISIN or
- * folio heading, and reads the figures inside.
- *
- * Anything it cannot read confidently is dropped. A holding missing from the
- * import is a visible gap the user can fill in by hand; a misread one quietly
- * corrupts their portfolio.
+ * The model is a witness, not an authority. Every value it gives is checked
+ * against the document (see ./grounding.ts), and a value that is not there is
+ * dropped. That check makes the approach safe: the model can be wrong,
+ * because a wrong answer does not get through.
  */
+
+/** Workers AI model. It supports JSON schema output. */
+export const CAS_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 
 export interface ParsedCasHolding {
   isin: string;
   schemeName: string;
   folioNumber: string;
   units: number;
-  /** Value the statement reports, used as the cost basis when present. */
+  /** Value the statement gives, used as the cost basis when present. */
   marketValue: number | null;
   navOnDate: number | null;
 }
 
-/** Strips the thousands separators Indian statements use, then parses. */
-function toNumber(raw: string | undefined): number | null {
-  if (!raw) return null;
-  const value = Number(raw.replace(/,/g, '').trim());
-  return Number.isFinite(value) ? value : null;
-}
+/** The model can return only these fields, in this shape. */
+const HOLDING_SCHEMA = {
+  type: 'object',
+  properties: {
+    holdings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          isin: { type: 'string', description: 'ISIN, 12 characters, e.g. INF179K01YV8' },
+          schemeName: { type: 'string', description: 'Scheme name as printed' },
+          folioNumber: { type: 'string', description: 'Folio number the scheme is under' },
+          units: { type: 'number', description: 'Closing unit balance' },
+          marketValue: { type: ['number', 'null'], description: 'Market value, or null' },
+          navOnDate: { type: ['number', 'null'], description: 'Closing NAV, or null' },
+        },
+        required: ['isin', 'schemeName', 'folioNumber', 'units', 'marketValue', 'navOnDate'],
+      },
+    },
+  },
+  required: ['holdings'],
+} as const;
 
-const FOLIO_G = /Folio\s*No\.?\s*:?\s*([0-9]+\s*\/?\s*[0-9]*)/gi;
-const ISIN_G = /\bISIN\s*:?\s*([A-Z]{2}[A-Z0-9]{9}[0-9])\b/gi;
+const SYSTEM_PROMPT = `You read Indian mutual fund Consolidated Account Statements and return the holdings as JSON.
 
-const CLOSING_UNITS = /Closing\s*Unit\s*Balance\s*:?\s*([\d,]+\.?\d*)/i;
-const NAV_ON = /NAV\s*on\s*\d{1,2}-[A-Za-z]{3}-\d{4}\s*:?\s*(?:INR|Rs\.?)?\s*([\d,]+\.?\d*)/i;
-const MARKET_VALUE =
-  /Market\s*Value\s*on\s*\d{1,2}-[A-Za-z]{3}-\d{4}\s*:?\s*(?:INR|Rs\.?)?\s*([\d,]+\.?\d*)/i;
+Rules:
+- Copy each value exactly as printed. Do not calculate, correct, round or guess a figure.
+- "units" is the CLOSING unit balance. It is never a transaction row.
+- Skip a scheme whose closing balance is zero. It was fully redeemed.
+- Each scheme belongs to the folio heading printed ABOVE it.
+- If a value is not printed, use null.
+- Return every scheme that still holds units, and nothing else.`;
 
-/**
- * Fields that end a scheme's data. The scheme name is whatever follows the
- * last of these before the next ISIN, which is how a name is found without
- * relying on line breaks.
- */
-const FIELD_END =
-  /(?:Market\s*Value\s*on\s*\d{1,2}-[A-Za-z]{3}-\d{4}\s*:?\s*(?:INR|Rs\.?)?\s*[\d,]+\.?\d*|NAV\s*on\s*\d{1,2}-[A-Za-z]{3}-\d{4}\s*:?\s*(?:INR|Rs\.?)?\s*[\d,]+\.?\d*|(?:Opening|Closing)\s*Unit\s*Balance\s*:?\s*[\d,]+\.?\d*|PAN\s*:?\s*[A-Z]{5}\d{4}[A-Z]|KYC\s*:?\s*\w+|Folio\s*No\.?\s*:?\s*[0-9]+\s*\/?\s*[0-9]*|Registrar\s*:?\s*\w+|Nominee\s*:?[^;]{0,40}?(?=\s[A-Z]))/gi;
-
-/** A scheme name carries a fund-house or plan marker; noise usually does not. */
-const SCHEME_HINT = /(fund|scheme|plan|etf|yojana)/i;
-
-/** Collapses every whitespace run to one space so offsets are predictable. */
-function normalise(text: string): string {
-  return text.replace(/\s+/g, ' ').trim();
-}
-
-/**
- * Reads the scheme name out of the run of text before an ISIN. The name is
- * what follows the last completed field, trimmed of the advisor and registrar
- * tags the registrars append.
- */
-function schemeNameBefore(segment: string): string | null {
-  FIELD_END.lastIndex = 0;
-  let cut = 0;
-  for (let match = FIELD_END.exec(segment); match; match = FIELD_END.exec(segment)) {
-    cut = match.index + match[0].length;
-  }
-
-  const name = segment
-    .slice(cut)
-    .replace(/\(\s*(advisor|registrar)[^)]*\)?/gi, '')
-    .replace(/\b(registrar|advisor)\s*:?\s*[A-Za-z]*$/i, '')
-    .replace(/\bISIN\s*:?\s*$/i, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  if (name.length < 8 || name.length > 200) return null;
-  if (!SCHEME_HINT.test(name)) return null;
-
-  return name;
-}
-
-interface Anchor {
-  index: number;
-  value: string;
-}
-
-function findAll(text: string, pattern: RegExp): Anchor[] {
-  const anchors: Anchor[] = [];
-  pattern.lastIndex = 0;
-
-  for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
-    anchors.push({ index: match.index, value: match[1] ?? '' });
-  }
-
-  return anchors;
-}
+/** A statement is much smaller than this. More text would overflow the model context. */
+const MAX_CHARS = 240_000;
 
 /**
- * Pulls the holdings out of a statement's extracted text.
+ * Converts the PDF to markdown with the Workers AI converter.
  *
- * Units come from the closing balance, so a folio redeemed to zero drops out
- * rather than importing as an empty position.
+ * The converter keeps table structure, which plain text extraction loses, and
+ * it runs in Cloudflare's service, not against this Worker's CPU budget.
  */
-export function parseCasText(rawText: string): ParsedCasHolding[] {
-  const text = normalise(rawText);
-  const isins = findAll(text, ISIN_G);
-  const folios = findAll(text, FOLIO_G);
+export async function extractPdfText(env: Env, bytes: Uint8Array, name: string): Promise<string> {
+  const result = await env.AI.toMarkdown({
+    name,
+    blob: new Blob([bytes], { type: 'application/pdf' }),
+  });
 
+  if (result.format === 'error') throw new Error(`could not read the PDF: ${result.error}`);
+  if (!result.data.trim()) throw new Error('the PDF has no readable text');
+
+  return result.data.slice(0, MAX_CHARS);
+}
+
+interface ModelHolding {
+  isin?: unknown;
+  schemeName?: unknown;
+  folioNumber?: unknown;
+  units?: unknown;
+  marketValue?: unknown;
+  navOnDate?: unknown;
+}
+
+function asNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  // A model can return a formatted string, even with a schema.
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value.replace(/,/g, '').trim());
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function asText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/** Reads JSON, also when the model puts it inside prose or a code fence. */
+function readJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end <= start) return null;
+    try {
+      return JSON.parse(text.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
+}
+
+export interface CasParseResult {
+  holdings: ParsedCasHolding[];
+  /** Rows the model returned that the document does not support. */
+  rejected: number;
+}
+
+/**
+ * Keeps only the rows that the document supports.
+ *
+ * Pure, so the guard is testable without a model. `rejected` is returned, not
+ * hidden: if most rows fail, the reading went wrong, and that must be visible.
+ */
+export function groundHoldings(returned: unknown, markdown: string): CasParseResult {
+  if (!Array.isArray(returned)) return { holdings: [], rejected: 0 };
+
+  const numbers = numbersIn(markdown);
   const holdings: ParsedCasHolding[] = [];
   const seen = new Set<string>();
+  let rejected = 0;
 
-  for (let i = 0; i < isins.length; i += 1) {
-    const anchor = isins[i]!;
+  for (const item of returned) {
+    const row = (item ?? {}) as ModelHolding;
+    const isin = asText(row.isin).toUpperCase();
+    const schemeName = asText(row.schemeName);
+    const folioNumber = asText(row.folioNumber).replace(/\s+/g, '');
+    const units = asNumber(row.units);
+    const marketValue = asNumber(row.marketValue);
+    const navOnDate = asNumber(row.navOnDate);
 
-    // A block ends at the next scheme or the next folio heading, whichever
-    // comes first. Running past a folio boundary would read the following
-    // folio's figures into this scheme.
-    const nextIsin = isins[i + 1]?.index ?? text.length;
-    const nextFolio = folios.find((folio) => folio.index > anchor.index)?.index ?? text.length;
-    const body = text.slice(anchor.index, Math.min(nextIsin, nextFolio));
+    // Shape first. A zero balance is a redeemed scheme, not an error.
+    if (units === 0) continue;
+    if (!/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/.test(isin) || units === null || units < 0) {
+      rejected += 1;
+      continue;
+    }
 
-    const units = toNumber(CLOSING_UNITS.exec(body)?.[1]);
-    if (units === null || units <= 0) continue; // fully redeemed, or unreadable
+    // Then grounding. Each check asks one question: does the document say this?
+    const supported =
+      containsLoosely(markdown, isin) &&
+      containsLoosely(markdown, folioNumber) &&
+      isGrounded(units, numbers) &&
+      (marketValue === null || isGrounded(marketValue, numbers)) &&
+      (navOnDate === null || isGrounded(navOnDate, numbers)) &&
+      isNameGrounded(schemeName, markdown);
 
-    // The owning folio is the nearest heading above this scheme. Searching
-    // forward would pick up the next folio for the last scheme in each block.
-    const folio = folios.filter((candidate) => candidate.index <= anchor.index).pop();
-    if (!folio) continue;
+    if (!supported) {
+      rejected += 1;
+      continue;
+    }
 
-    // The name sits between the previous anchor and this ISIN.
-    const previous = Math.max(isins[i - 1]?.index ?? 0, folio.index);
-    const schemeName = schemeNameBefore(text.slice(previous, anchor.index));
-    if (!schemeName) continue;
-
-    const folioNumber = folio.value.replace(/\s+/g, '');
-    const isin = anchor.value.toUpperCase();
-
-    // A statement may list one scheme twice in a folio when it splits the
-    // period. The closing balance is the same figure in both, so keep one.
+    // A statement can list one scheme twice when it splits the period.
     const key = `${folioNumber}:${isin}`;
     if (seen.has(key)) continue;
     seen.add(key);
 
-    holdings.push({
-      isin,
-      schemeName,
-      folioNumber,
-      units,
-      marketValue: toNumber(MARKET_VALUE.exec(body)?.[1]),
-      navOnDate: toNumber(NAV_ON.exec(body)?.[1]),
-    });
+    holdings.push({ isin, schemeName, folioNumber, units, marketValue, navOnDate });
   }
 
-  return holdings;
+  return { holdings, rejected };
+}
+
+/** Asks the model for the holdings, then keeps only what the document supports. */
+export async function parseCasMarkdown(env: Env, markdown: string): Promise<CasParseResult> {
+  const response = await env.AI.run(CAS_MODEL, {
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: markdown },
+    ],
+    // The schema controls the decoder, so the reply has the correct shape.
+    response_format: { type: 'json_schema', json_schema: HOLDING_SCHEMA },
+    // This is extraction, so always take the most likely token.
+    temperature: 0,
+    max_tokens: 8192,
+  });
+
+  const raw = (response as { response?: unknown }).response;
+  const payload = typeof raw === 'string' ? readJson(raw) : raw;
+  const returned = (payload as { holdings?: unknown } | null)?.holdings;
+
+  return groundHoldings(returned, markdown);
 }
 
 export interface ResolvedCasHolding extends ParsedCasHolding {
-  /** Null when the ISIN is absent from AMFI's file; the row is still shown. */
+  /** Null when the ISIN is not in AMFI's file. The row is still shown. */
   amfiCode: string | null;
 }
 
 /**
- * Attaches AMFI scheme codes. The statement's own scheme name is kept: it is
- * what the user will recognise, and AMFI's wording often differs.
+ * Adds AMFI scheme codes. The statement's own scheme name is kept, because
+ * the user knows that name and AMFI's text is often different.
  */
 export function resolveCasHoldings(
   holdings: readonly ParsedCasHolding[],
@@ -186,13 +223,4 @@ export function resolveCasHoldings(
     ...holding,
     amfiCode: isinIndex.get(holding.isin)?.amfiCode ?? null,
   }));
-}
-
-/** Extracts text from the PDF bytes. Kept separate so parsing stays testable. */
-export async function extractPdfText(bytes: Uint8Array): Promise<string> {
-  const { extractText, getDocumentProxy } = await import('unpdf');
-  const document = await getDocumentProxy(bytes);
-  const { text } = await extractText(document, { mergePages: true });
-
-  return Array.isArray(text) ? text.join('\n') : text;
 }

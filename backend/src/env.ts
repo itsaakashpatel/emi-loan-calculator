@@ -1,6 +1,8 @@
 export interface Env {
   DB: D1Database;
   CAS_BUCKET: R2Bucket;
+  /** Workers AI. Converts an uploaded statement to markdown and reads the holdings. */
+  AI: Ai;
   ENVIRONMENT: string;
   /** Google OAuth web client ID. Audience for the ID tokens the app sends. */
   GOOGLE_CLIENT_ID: string;

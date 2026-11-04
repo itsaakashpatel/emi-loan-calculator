@@ -85,8 +85,26 @@ Fire the daily refresh by hand:
 curl "localhost:8787/__scheduled?cron=0+2+*+*+*"
 ```
 
+## CAS import
+
+A Consolidated Account Statement is read in two steps, both on Workers AI
+(the `AI` binding in `wrangler.toml`):
+
+1. `env.AI.toMarkdown()` converts the PDF to markdown.
+2. A model reads the markdown into a fixed JSON schema.
+
+The model can be wrong, so its answer is never trusted. `src/lib/grounding.ts`
+checks every number, ISIN, folio and scheme name against the markdown. A row
+that the document does not support is dropped, and the count is logged. Keep
+this check. It is the only thing that stops an invented figure from reaching a
+portfolio.
+
+Local `wrangler dev` runs the AI binding against Cloudflare, so it needs
+`wrangler login` and it uses your account's Workers AI quota.
+
 ## Plan
 
-CAS parsing reads a whole PDF and does not fit the free tier's 10 ms CPU limit,
-so this Worker needs Workers Paid. `wrangler.toml` asks for 30 s of CPU per
-invocation.
+The import waits on Workers AI and does little work in the Worker itself. Check
+the current Workers AI and Workers limits on Cloudflare's pricing page before
+you pick a plan. `wrangler.toml` asks for 30 s of CPU per invocation as a
+margin, and the free tier does not allow that.
