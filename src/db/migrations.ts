@@ -82,6 +82,60 @@ const MIGRATIONS: ReadonlyArray<(db: SQLiteDatabase) => Promise<void>> = [
       ALTER TABLE loans ADD COLUMN first_payment_date TEXT;
     `);
   },
+
+  // v3 — a local mirror of the cloud portfolio, so the tab renders offline.
+  //
+  // These tables are a cache, never a source of truth: the server owns this
+  // data, every sync replaces them wholesale, and signing out empties them.
+  // Hence text ids that came from the server, no autoincrement, and the
+  // already-computed values alongside each holding so the screen needs no
+  // network call to draw.
+  async (db) => {
+    await db.execAsync(`
+      CREATE TABLE portfolio_members (
+        id         TEXT PRIMARY KEY NOT NULL,
+        name       TEXT    NOT NULL,
+        relation   TEXT,
+        has_pan    INTEGER NOT NULL DEFAULT 0,
+        sort_order INTEGER NOT NULL DEFAULT 0
+      );
+
+      CREATE TABLE portfolio_mf_holdings (
+        id            TEXT PRIMARY KEY NOT NULL,
+        member_id     TEXT NOT NULL,
+        amfi_code     TEXT NOT NULL,
+        scheme_name   TEXT NOT NULL,
+        folio_number  TEXT,
+        units         REAL NOT NULL,
+        avg_nav       REAL,
+        current_nav   REAL,
+        nav_date      TEXT,
+        source        TEXT NOT NULL DEFAULT 'manual',
+        invested      REAL NOT NULL DEFAULT 0,
+        current_value REAL NOT NULL DEFAULT 0,
+        gain          REAL NOT NULL DEFAULT 0,
+        gain_pct      REAL NOT NULL DEFAULT 0
+      );
+      CREATE INDEX idx_pmf_member ON portfolio_mf_holdings(member_id);
+
+      CREATE TABLE portfolio_stock_holdings (
+        id            TEXT PRIMARY KEY NOT NULL,
+        member_id     TEXT NOT NULL,
+        symbol        TEXT NOT NULL,
+        exchange      TEXT NOT NULL DEFAULT 'NSE',
+        stock_name    TEXT NOT NULL,
+        quantity      REAL NOT NULL,
+        avg_price     REAL,
+        current_price REAL,
+        price_date    TEXT,
+        invested      REAL NOT NULL DEFAULT 0,
+        current_value REAL NOT NULL DEFAULT 0,
+        gain          REAL NOT NULL DEFAULT 0,
+        gain_pct      REAL NOT NULL DEFAULT 0
+      );
+      CREATE INDEX idx_psh_member ON portfolio_stock_holdings(member_id);
+    `);
+  },
 ];
 
 export async function migrate(db: SQLiteDatabase): Promise<void> {

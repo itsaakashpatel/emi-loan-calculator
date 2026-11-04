@@ -1,11 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   View,
+  type RefreshControlProps,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -22,6 +23,8 @@ interface ScreenProps {
   contentStyle?: StyleProp<ViewStyle>;
   /** Extra bottom padding so content clears the floating tab bar. */
   floatingTabBar?: boolean;
+  /** Pull-to-refresh, for a screen showing data fetched from elsewhere. */
+  refreshControl?: ReactElement<RefreshControlProps>;
 }
 
 /** Height of the floating tab bar plus its inset, so scroll content can clear it. */
@@ -33,6 +36,7 @@ export function Screen({
   footer,
   contentStyle,
   floatingTabBar = false,
+  refreshControl,
 }: ScreenProps) {
   const { colors, spacing } = useTheme();
   const insets = useSafeAreaInsets();
@@ -60,6 +64,7 @@ export function Screen({
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="interactive"
             showsVerticalScrollIndicator={false}
+            refreshControl={refreshControl}
           >
             {children}
           </ScrollView>

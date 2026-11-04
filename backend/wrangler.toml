@@ -1,0 +1,35 @@
+name = "emi-portfolio-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat"]
+
+# Most of a CAS import waits on Workers AI, which does not count as CPU here.
+# The higher limit stays as a margin for the AMFI parse in the daily cron.
+[limits]
+cpu_ms = 30000
+
+# Converts an uploaded statement to markdown and reads the holdings from it.
+[ai]
+binding = "AI"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "emi-portfolio"
+database_id = "PLACEHOLDER_RUN_WRANGLER_D1_CREATE"
+migrations_dir = "src/db/migrations"
+
+[[r2_buckets]]
+binding = "CAS_BUCKET"
+bucket_name = "cas-uploads"
+
+# 02:00 UTC is 07:30 IST — after AMFI publishes the previous day's NAVs.
+[triggers]
+crons = ["0 2 * * *"]
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secrets are set with `wrangler secret put`, never committed:
+#   GOOGLE_CLIENT_ID  — the Google OAuth *web* client ID, used as the audience
+#                       when verifying ID tokens the app sends.
+#   JWT_SECRET        — random 32+ byte string signing our own session tokens.

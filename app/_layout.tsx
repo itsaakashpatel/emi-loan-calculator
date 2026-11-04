@@ -9,6 +9,7 @@ import { BackButton } from '../src/components/Header';
 import { GradientBackdrop } from '../src/components/Screen';
 import { getDb } from '../src/db/client';
 import { syncEmiReminders } from '../src/notifications';
+import { useAuthStore } from '../src/store/auth';
 import { useCalculatorStore } from '../src/store/calculator';
 import { useLoansStore } from '../src/store/loans';
 import { useSettingsStore } from '../src/store/settings';
@@ -37,6 +38,9 @@ export default function RootLayout() {
         const { defaultRate, defaultTenureYears } = useSettingsStore.getState();
         useCalculatorStore.getState().seedDefaults({ annualRate: defaultRate, tenureYears: defaultTenureYears });
         await useLoansStore.getState().refresh();
+        // Only restores a stored session; it opens no network connection, so
+        // a signed-out or offline launch costs nothing.
+        await useAuthStore.getState().hydrate();
       } finally {
         if (!cancelled) setReady(true);
         await SplashScreen.hideAsync();
@@ -124,15 +128,17 @@ function AppStack() {
         <Stack.Screen name="loan/form" options={{ title: 'Loan', presentation: 'modal' }} />
         <Stack.Screen name="loan/[id]" options={{ title: 'Loan' }} />
         <Stack.Screen name="invest/[type]" options={{ title: 'Calculator' }} />
-        <Stack.Screen name="tools/gst" options={{ title: 'GST Calculator' }} />
-        <Stack.Screen name="tools/currency" options={{ title: 'Currency Converter' }} />
         <Stack.Screen name="tools/eligibility" options={{ title: 'Loan Eligibility' }} />
-        <Stack.Screen name="tools/date-diff" options={{ title: 'Date Difference' }} />
-        <Stack.Screen name="tools/age" options={{ title: 'Age Calculator' }} />
-        <Stack.Screen name="tools/discount" options={{ title: 'Discount Calculator' }} />
-        <Stack.Screen name="tools/percentage" options={{ title: 'Percentage Calculator' }} />
-        <Stack.Screen name="tools/tip" options={{ title: 'Tip & Split' }} />
-        <Stack.Screen name="tools/fuel" options={{ title: 'Fuel Cost' }} />
+        <Stack.Screen name="portfolio/member/[id]" options={{ title: 'Holdings' }} />
+        <Stack.Screen
+          name="portfolio/member-form"
+          options={{ title: 'Family Member', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="portfolio/holding-form"
+          options={{ title: 'Holding', presentation: 'modal' }}
+        />
+        <Stack.Screen name="portfolio/cas-upload" options={{ title: 'Import Statement' }} />
         <Stack.Screen name="history" options={{ title: 'History' }} />
       </Stack>
       </NavThemeProvider>

@@ -31,6 +31,9 @@ export async function resetDatabase(): Promise<void> {
     DELETE FROM loans;
     DELETE FROM saved_calculations;
     DELETE FROM fx_rates;
+    DELETE FROM portfolio_mf_holdings;
+    DELETE FROM portfolio_stock_holdings;
+    DELETE FROM portfolio_members;
   `);
 }
 
