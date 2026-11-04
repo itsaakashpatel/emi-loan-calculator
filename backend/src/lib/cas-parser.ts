@@ -18,6 +18,18 @@ import { containsLoosely, isGrounded, isNameGrounded, numbersIn } from './ground
  * because a wrong answer does not get through.
  */
 
+/**
+ * An error whose message is safe to show the user. Any other error may carry
+ * internal detail (paths, stack traces, provider text), so the route logs it
+ * and sends a generic message instead.
+ */
+export class CasError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CasError';
+  }
+}
+
 /** Workers AI model. It supports JSON schema output. */
 export const CAS_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 
@@ -79,8 +91,11 @@ export async function extractPdfText(env: Env, bytes: Uint8Array, name: string):
     blob: new Blob([bytes], { type: 'application/pdf' }),
   });
 
-  if (result.format === 'error') throw new Error(`could not read the PDF: ${result.error}`);
-  if (!result.data.trim()) throw new Error('the PDF has no readable text');
+  if (result.format === 'error') {
+    console.error('toMarkdown failed', result.error);
+    throw new CasError('could not read this PDF');
+  }
+  if (!result.data.trim()) throw new CasError('the PDF has no readable text');
 
   return result.data.slice(0, MAX_CHARS);
 }

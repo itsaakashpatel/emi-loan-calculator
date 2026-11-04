@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { AppEnv } from '../env';
 import { fetchIsinIndex } from '../lib/amfi';
 import {
+  CasError,
   extractPdfText,
   parseCasMarkdown,
   resolveCasHoldings,
@@ -88,7 +89,7 @@ cas.post('/cas/upload', async (c) => {
     const { holdings: parsed, rejected } = await parseCasMarkdown(c.env, markdown);
 
     if (parsed.length === 0) {
-      throw new Error(
+      throw new CasError(
         rejected > 0
           ? 'the holdings in this statement could not be read reliably'
           : 'no holdings found — is this a mutual fund CAS?',
@@ -116,7 +117,11 @@ cas.post('/cas/upload', async (c) => {
 
     return c.json({ uploadId, status: 'parsed', holdings: resolved });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'could not read the statement';
+    // Only our own messages reach the user. Anything else (an AI or network
+    // failure) can carry paths and stack traces, so it is logged, not returned.
+    if (!(error instanceof CasError)) console.error(`cas ${uploadId} failed`, error);
+    const message =
+      error instanceof CasError ? error.message : 'could not read the statement, please try again';
     await c.env.DB.prepare(
       `UPDATE cas_uploads SET status = 'failed', error = ?, processed_at = ? WHERE id = ?`,
     )
