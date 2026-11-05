@@ -13,7 +13,8 @@ import { computeSavings } from '../../src/lib/finance/emi';
 import { daysBetween, describeMonthGap, formatDate, todayISO } from '../../src/lib/format/date';
 import { formatMoney, formatTenure, getCurrency, roundToTotal } from '../../src/lib/format/money';
 import type { AdjustMode, ScheduleRow } from '../../src/lib/finance/types';
-import { sharePdf } from '../../src/pdf/share';
+import { scheduleCsv } from '../../src/lib/csv';
+import { shareCsv, sharePdf } from '../../src/pdf/share';
 import { loanSummaryHtml, scheduleHtml } from '../../src/pdf/templates';
 import { loanInputOf, useLoansStore } from '../../src/store/loans';
 import { useTheme } from '../../src/theme/ThemeProvider';
@@ -58,13 +59,13 @@ export default function LoanDetailScreen() {
 
   useHeaderAction({
     icon: 'share-outline',
-    label: 'Export as PDF',
+    label: 'Export',
     enabled: Boolean(item),
     onPress: () => {
       if (!item) return;
       const { loan: current, result: figures } = item;
       // Two documents, one button: ask rather than guess which one the user wants.
-      Alert.alert('Export as PDF', undefined, [
+      Alert.alert('Export', undefined, [
         {
           text: 'Loan summary',
           onPress: () =>
@@ -74,6 +75,10 @@ export default function LoanDetailScreen() {
           text: 'Full schedule',
           onPress: () =>
             void sharePdf(scheduleHtml(figures, current.currency, current.name), 'loan-schedule'),
+        },
+        {
+          text: 'Schedule as CSV for Excel',
+          onPress: () => void shareCsv(scheduleCsv(figures), `${current.name}-schedule`),
         },
         { text: 'Cancel', style: 'cancel' },
       ]);

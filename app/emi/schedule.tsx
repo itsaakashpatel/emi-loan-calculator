@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 
 import { useHeaderAction } from '../../src/components/Header';
 import { YearlyOutflowChart } from '../../src/components/LoanSummary';
@@ -8,7 +8,8 @@ import { Screen } from '../../src/components/Screen';
 import { Card, KeyValueRow, Label } from '../../src/components/primitives';
 import { amortize } from '../../src/lib/finance/emi';
 import { formatMoney, formatTenure, getCurrency } from '../../src/lib/format/money';
-import { sharePdf } from '../../src/pdf/share';
+import { scheduleCsv } from '../../src/lib/csv';
+import { shareCsv, sharePdf } from '../../src/pdf/share';
 import { scheduleHtml } from '../../src/pdf/templates';
 import { useLoanInput } from '../../src/store/calculator';
 import { useCurrency } from '../../src/store/settings';
@@ -24,8 +25,13 @@ export default function ScheduleScreen() {
 
   useHeaderAction({
     icon: 'share-outline',
-    label: 'Export schedule as PDF',
-    onPress: () => void sharePdf(scheduleHtml(result, currency), 'amortisation-schedule'),
+    label: 'Export schedule',
+    onPress: () =>
+      Alert.alert('Export schedule', undefined, [
+        { text: 'PDF', onPress: () => void sharePdf(scheduleHtml(result, currency), 'amortisation-schedule') },
+        { text: 'CSV for Excel', onPress: () => void shareCsv(scheduleCsv(result), 'amortisation-schedule') },
+        { text: 'Cancel', style: 'cancel' },
+      ]),
   });
 
   return (

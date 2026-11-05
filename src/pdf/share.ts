@@ -31,6 +31,27 @@ export async function sharePdf(html: string, filename: string): Promise<void> {
 }
 
 /**
+ * Writes `text` to `filename.csv` in the cache directory and opens the share sheet, so the user can
+ * open it in Excel or Numbers, or save it to Files.
+ */
+export async function shareCsv(text: string, filename: string): Promise<void> {
+  try {
+    const file = new File(Paths.cache, `${safeName(filename)}.csv`);
+    if (file.exists) file.delete();
+    file.create();
+    // A byte-order mark makes Excel read the file as UTF-8.
+    file.write(`\uFEFF${text}`);
+    await Sharing.shareAsync(file.uri, {
+      mimeType: 'text/csv',
+      dialogTitle: filename,
+      UTI: 'public.comma-separated-values-text',
+    });
+  } catch (error) {
+    Alert.alert('Export failed', error instanceof Error ? error.message : 'Could not create the file.');
+  }
+}
+
+/**
  * Moves the printed file to a readable name in the cache directory. Returns the original URI if the
  * move fails — a UUID filename is a poor result, but it beats losing the export entirely.
  */
