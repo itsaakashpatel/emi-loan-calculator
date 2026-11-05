@@ -210,3 +210,51 @@ export function currentTaxYear(result: TaxBenefitResult, today: string): TaxYear
   const fy = financialYearOf(today);
   return result.years.find((row) => row.fy === fy);
 }
+
+/* --------------------------------------------------------- HRA exemption ---- */
+
+export interface HraInput {
+  /** Basic salary plus dearness allowance that counts for retirement, per year. */
+  basicDa: number;
+  /** HRA received from the employer, per year. */
+  hraReceived: number;
+  /** Rent paid, per year. */
+  rentPaid: number;
+  /** Mumbai, Delhi, Kolkata or Chennai. */
+  metro: boolean;
+}
+
+export interface HraResult {
+  /** The three limits of Section 10(13A); the exemption is the lowest. */
+  limits: { received: number; rentOverTenPct: number; salaryShare: number };
+  exempt: number;
+  taxable: number;
+  /** Which limit set the exemption. */
+  binding: 'received' | 'rentOverTenPct' | 'salaryShare';
+}
+
+/**
+ * HRA exemption under Section 10(13A), old regime only: the lowest of the HRA received, rent paid
+ * minus 10% of basic + DA, and 50% (metro) or 40% (other cities) of basic + DA.
+ */
+export function calculateHra(input: HraInput): HraResult {
+  const basic = Math.max(0, toMinor(input.basicDa));
+  const received = Math.max(0, toMinor(input.hraReceived));
+  const rentOverTenPct = Math.max(0, toMinor(input.rentPaid) - Math.round(basic * 0.1));
+  const salaryShare = Math.round(basic * (input.metro ? 0.5 : 0.4));
+
+  const limits = { received, rentOverTenPct, salaryShare };
+  const binding = (Object.keys(limits) as Array<keyof typeof limits>).reduce((a, b) => (limits[b] < limits[a] ? b : a));
+  const exempt = limits[binding];
+
+  return {
+    limits: {
+      received: fromMinor(received),
+      rentOverTenPct: fromMinor(rentOverTenPct),
+      salaryShare: fromMinor(salaryShare),
+    },
+    exempt: fromMinor(exempt),
+    taxable: fromMinor(received - exempt),
+    binding,
+  };
+}

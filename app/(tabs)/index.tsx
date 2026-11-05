@@ -38,6 +38,12 @@ const TILES: readonly TileSpec[] = [
     hint: 'Tax saved under Section 80C and 24(b)',
   },
   {
+    href: '/loan/step-up',
+    icon: 'trending-up-outline',
+    label: 'Step-up\nEMI',
+    hint: 'Raise the EMI each year and close the loan early',
+  },
+  {
     href: '/loan/card-emi',
     icon: 'card-outline',
     label: 'Credit Card\n/ No-cost EMI',

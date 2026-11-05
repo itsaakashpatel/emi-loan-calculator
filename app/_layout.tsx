@@ -120,6 +120,7 @@ function AppStack() {
         <Stack.Screen name="loan/tax" options={{ title: 'Home Loan Tax Benefit' }} />
         <Stack.Screen name="loan/card-emi" options={{ title: 'Card EMI Cost' }} />
         <Stack.Screen name="loan/payoff" options={{ title: 'Which Loan to Prepay' }} />
+        <Stack.Screen name="loan/step-up" options={{ title: 'Step-up EMI' }} />
         <Stack.Screen name="loans" options={{ title: 'Loan Profile' }} />
         <Stack.Screen name="emi/schedule" options={{ title: 'Amortisation Schedule' }} />
         <Stack.Screen name="emi/advanced" options={{ title: 'Advanced Options' }} />
@@ -128,6 +129,7 @@ function AppStack() {
         <Stack.Screen name="loan/[id]" options={{ title: 'Loan' }} />
         <Stack.Screen name="invest/[type]" options={{ title: 'Calculator' }} />
         <Stack.Screen name="tools/gst" options={{ title: 'GST Calculator' }} />
+        <Stack.Screen name="tools/hra" options={{ title: 'HRA Exemption' }} />
         <Stack.Screen name="tools/currency" options={{ title: 'Currency Converter' }} />
         <Stack.Screen name="tools/eligibility" options={{ title: 'Loan Eligibility' }} />
         <Stack.Screen name="tools/date-diff" options={{ title: 'Date Difference' }} />
