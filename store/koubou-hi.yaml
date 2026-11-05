@@ -1,0 +1,161 @@
+project:
+  name: Loan EMI & SIP Calculator
+  device: iPhone 16 Pro - Black Titanium - Portrait
+  output_dir: screenshots/framed-hi
+  output_size: iPhone6_9
+
+defaults:
+  background:
+    type: linear
+    direction: 180
+    colors:
+      - '#CFE3F2'
+      - '#F7FBFD'
+
+screenshots:
+  01-emi:
+    content:
+      - type: text
+        content: लोन EMI कैलकुलेटर
+        position: ['50%', '5.5%']
+        size: 70
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: होम, कार और पर्सनल लोन की EMI सेकंड में
+        position: ['50%', '10.5%']
+        size: 36
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/01-emi.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  02-tracker:
+    content:
+      - type: text
+        content: रिमाइंडर के साथ EMI ट्रैकर
+        position: ['50%', '5.5%']
+        size: 70
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: बचा हुआ मूलधन और ब्याज देखें
+        position: ['50%', '10.5%']
+        size: 36
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/02-tracker.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  03-compare:
+    content:
+      - type: text
+        content: स्टेप-अप EMI कैलकुलेटर
+        position: ['50%', '5.5%']
+        size: 70
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: लोन कई साल पहले खत्म करें
+        position: ['50%', '10.5%']
+        size: 36
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/03-compare.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  04-schedule:
+    content:
+      - type: text
+        content: अमॉर्टाइज़ेशन शेड्यूल
+        position: ['50%', '5.5%']
+        size: 70
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: इनपुट बदलें। PDF या Excel में एक्सपोर्ट करें
+        position: ['50%', '10.5%']
+        size: 36
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/04-schedule.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  05-tools:
+    content:
+      - type: text
+        content: होम लोन टैक्स बेनिफिट
+        position: ['50%', '5.5%']
+        size: 70
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: सेक्शन 80C और 24(b) की बचत, साल दर साल
+        position: ['50%', '10.5%']
+        size: 36
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/05-tools.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  06-currency:
+    content:
+      - type: text
+        content: नो-कॉस्ट EMI कैलकुलेटर
+        position: ['50%', '5.5%']
+        size: 70
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: छिपा GST और फीस का खर्च देखें
+        position: ['50%', '10.5%']
+        size: 36
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/06-currency.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84
+
+  07-all:
+    content:
+      - type: text
+        content: EMI, SIP, FD, PPF, NPS
+        position: ['50%', '5.5%']
+        size: 70
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        weight: bold
+        color: '#132230'
+      - type: text
+        content: मुफ्त। कोई अकाउंट नहीं। कोई विज्ञापन नहीं।
+        position: ['50%', '10.5%']
+        size: 36
+        font_family: /System/Library/Fonts/Kohinoor.ttc
+        color: '#59697A'
+      - type: image
+        asset: screenshots/raw/07-all.png
+        frame: true
+        position: ['50%', '60%']
+        scale: 0.84

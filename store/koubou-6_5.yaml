@@ -16,13 +16,13 @@ screenshots:
   01-emi:
     content:
       - type: text
-        content: Know your EMI in seconds
+        content: Loan EMI Calculator
         position: ['50%', '5.5%']
         size: 66
         weight: bold
         color: '#132230'
       - type: text
-        content: See exactly how much is interest
+        content: Home, car and personal loan EMI in seconds
         position: ['50%', '10.5%']
         size: 34
         color: '#59697A'
@@ -35,13 +35,13 @@ screenshots:
   02-tracker:
     content:
       - type: text
-        content: Track every instalment
+        content: EMI Tracker with Reminders
         position: ['50%', '5.5%']
         size: 66
         weight: bold
         color: '#132230'
       - type: text
-        content: Mark each payment as it is paid
+        content: See principal and interest still to pay
         position: ['50%', '10.5%']
         size: 34
         color: '#59697A'
@@ -54,13 +54,13 @@ screenshots:
   03-compare:
     content:
       - type: text
-        content: Compare two offers
+        content: Step-up EMI Calculator
         position: ['50%', '5.5%']
         size: 66
         weight: bold
         color: '#132230'
       - type: text
-        content: Processing fees counted in the total
+        content: Finish the loan years sooner
         position: ['50%', '10.5%']
         size: 34
         color: '#59697A'
@@ -73,13 +73,13 @@ screenshots:
   04-schedule:
     content:
       - type: text
-        content: The full schedule
+        content: Amortisation Schedule
         position: ['50%', '5.5%']
         size: 66
         weight: bold
         color: '#132230'
       - type: text
-        content: Month by month, and export a PDF
+        content: Change the inputs. Export PDF or Excel
         position: ['50%', '10.5%']
         size: 34
         color: '#59697A'
@@ -92,13 +92,13 @@ screenshots:
   05-tools:
     content:
       - type: text
-        content: Everyday tools
+        content: Home Loan Tax Benefit
         position: ['50%', '5.5%']
         size: 66
         weight: bold
         color: '#132230'
       - type: text
-        content: GST, tips, discounts, fuel and dates
+        content: Section 80C and 24(b) savings by year
         position: ['50%', '10.5%']
         size: 34
         color: '#59697A'
@@ -111,13 +111,13 @@ screenshots:
   06-currency:
     content:
       - type: text
-        content: Your currency, your defaults
+        content: No-cost EMI Calculator
         position: ['50%', '5.5%']
         size: 66
         weight: bold
         color: '#132230'
       - type: text
-        content: INR, USD, EUR, GBP, CAD and more
+        content: See the hidden GST and fee cost
         position: ['50%', '10.5%']
         size: 34
         color: '#59697A'
@@ -130,13 +130,13 @@ screenshots:
   07-all:
     content:
       - type: text
-        content: Every calculator in one app
+        content: EMI, SIP, FD, PPF, NPS
         position: ['50%', '5.5%']
         size: 66
         weight: bold
         color: '#132230'
       - type: text
-        content: No account. No ads. No tracking.
+        content: Free. No account. No ads.
         position: ['50%', '10.5%']
         size: 34
         color: '#59697A'
