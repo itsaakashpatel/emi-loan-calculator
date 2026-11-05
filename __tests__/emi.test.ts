@@ -434,3 +434,24 @@ describe('dueDateFor', () => {
     expect(resolveFirstPaymentDate('2026-05-01', '2026-01-01')).toBe('2026-05-01');
   });
 });
+
+describe('half-yearly part payments', () => {
+  it('lands every 6 instalments and stops after `count`', () => {
+    const event = { kind: 'part_payment', startMonth: 6, amount: 50_000, frequency: 'half_yearly', mode: 'reduce_tenure', count: 14 } as const;
+    expect([6, 12, 18].map((m) => partPaymentApplies(event, m))).toEqual([true, true, true]);
+    expect([5, 7, 9, 15].map((m) => partPaymentApplies(event, m))).toEqual([false, false, false, false]);
+    expect(partPaymentApplies(event, 6 + 6 * 13)).toBe(true);
+    expect(partPaymentApplies(event, 6 + 6 * 14)).toBe(false);
+  });
+
+  it('prepays 50,000 every 6 months for 7 years as 7 lakh in total', () => {
+    const result = amortize({
+      principal: 3_000_000,
+      annualRate: 8.5,
+      tenureMonths: 240,
+      startDate: '2026-01-01',
+      events: [{ kind: 'part_payment', startMonth: 6, amount: 50_000, frequency: 'half_yearly', mode: 'reduce_tenure', count: 14 }],
+    });
+    expect(result.totalPrepayment).toBe(700_000);
+  });
+});

@@ -12,7 +12,7 @@ import {
 import { listPayments, markPaid, markUnpaid, type PaymentRecord } from '../db/payments';
 import { amortize } from '../lib/finance/emi';
 import { todayISO } from '../lib/format/date';
-import type { LoanEvent, LoanResult } from '../lib/finance/types';
+import type { LoanEvent, LoanInput, LoanResult } from '../lib/finance/types';
 
 export interface LoanWithProgress {
   loan: SavedLoan;
@@ -32,6 +32,12 @@ export interface LoanWithProgress {
   outstanding: number;
   /** Cash still to hand over: every unpaid instalment, interest included. */
   remainingAmount: number;
+  /** Interest still to pay in the unpaid instalments. */
+  interestRemaining: number;
+  /** EMI of the next unpaid instalment, part payments excluded. 0 once closed. */
+  currentEmi: number;
+  /** Number of the next unpaid instalment. `null` once closed. */
+  nextInstallmentNo: number | null;
   nextDueDate: string | null;
   nextDueAmount: number;
   overdueCount: number;
@@ -54,8 +60,9 @@ export interface LoansState {
   byId: (id: number) => LoanWithProgress | undefined;
 }
 
-function project(loan: SavedLoan, payments: PaymentRecord[]): LoanWithProgress {
-  const result = amortize({
+/** The engine input for a saved loan. Every screen that recomputes a saved loan goes through this. */
+export function loanInputOf(loan: SavedLoan): LoanInput {
+  return {
     principal: loan.principal,
     annualRate: loan.annualRate,
     tenureMonths: loan.tenureMonths,
@@ -64,7 +71,11 @@ function project(loan: SavedLoan, payments: PaymentRecord[]): LoanWithProgress {
     advanceEmis: loan.advanceEmis,
     fees: loan.fees,
     events: loan.events,
-  });
+  };
+}
+
+function project(loan: SavedLoan, payments: PaymentRecord[]): LoanWithProgress {
+  const result = amortize(loanInputOf(loan));
 
   const paid = payments.filter((p) => p.paidDate !== null);
   const paidNumbers = new Set(paid.map((p) => p.installmentNo));
@@ -82,6 +93,7 @@ function project(loan: SavedLoan, payments: PaymentRecord[]): LoanWithProgress {
   const principalPaid = settled.reduce((sum, row) => sum + row.principal + row.prepayment, 0);
   const interestPaid = settled.reduce((sum, row) => sum + row.interest - row.capitalised, 0);
   const remainingAmount = pending.reduce((sum, row) => sum + row.emi + row.prepayment, 0);
+  const interestRemaining = pending.reduce((sum, row) => sum + row.interest - row.capitalised, 0);
 
   return {
     loan,
@@ -94,6 +106,9 @@ function project(loan: SavedLoan, payments: PaymentRecord[]): LoanWithProgress {
     progressPct: totalInstallments > 0 ? (paid.length / totalInstallments) * 100 : 0,
     outstanding: Math.max(0, loan.principal + result.capitalisedInterest - principalPaid),
     remainingAmount,
+    interestRemaining,
+    currentEmi: next?.emi ?? 0,
+    nextInstallmentNo: next?.no ?? null,
     nextDueDate: next?.date ?? null,
     nextDueAmount: next ? next.emi + next.prepayment : 0,
     overdueCount,

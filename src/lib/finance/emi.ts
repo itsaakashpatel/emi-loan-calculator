@@ -207,7 +207,7 @@ export function calculateEligibility(input: EligibilityInput): EligibilityResult
   };
 }
 
-const STEP_BY_FREQUENCY = { once: 0, monthly: 1, quarterly: 3, yearly: 12 } as const;
+const STEP_BY_FREQUENCY = { once: 0, monthly: 1, quarterly: 3, half_yearly: 6, yearly: 12 } as const;
 
 /** Whether a recurring part-payment event lands on installment `month`. */
 export function partPaymentApplies(event: PartPaymentEvent, month: number): boolean {

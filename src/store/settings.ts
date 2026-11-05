@@ -30,6 +30,9 @@ const KEYS = {
   notificationTime: 'notification_time',
 } as const;
 
+/** Every setting key, so a backup restores settings and nothing else. */
+export const SETTING_KEYS: readonly string[] = Object.values(KEYS);
+
 const DEFAULTS = {
   themePreference: 'system' as ThemePreference,
   defaultRate: 8.5,

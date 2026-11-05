@@ -15,7 +15,7 @@ import { formatMoney, formatTenure, getCurrency, roundToTotal } from '../../src/
 import type { AdjustMode, ScheduleRow } from '../../src/lib/finance/types';
 import { sharePdf } from '../../src/pdf/share';
 import { loanSummaryHtml, scheduleHtml } from '../../src/pdf/templates';
-import { useLoansStore } from '../../src/store/loans';
+import { loanInputOf, useLoansStore } from '../../src/store/loans';
 import { useTheme } from '../../src/theme/ThemeProvider';
 
 export default function LoanDetailScreen() {
@@ -51,16 +51,7 @@ export default function LoanDetailScreen() {
   const savings = useMemo(
     () =>
       item
-        ? computeSavings({
-            principal: item.loan.principal,
-            annualRate: item.loan.annualRate,
-            tenureMonths: item.loan.tenureMonths,
-            startDate: item.loan.startDate,
-            firstPaymentDate: item.loan.firstPaymentDate ?? undefined,
-            advanceEmis: item.loan.advanceEmis,
-            fees: item.loan.fees,
-            events: item.loan.events,
-          })
+        ? computeSavings(loanInputOf(item.loan))
         : null,
     [item],
   );
@@ -275,6 +266,14 @@ export default function LoanDetailScreen() {
           icon="cash-outline"
           onPress={() => setPrepayOpen(true)}
         />
+        {loan.type === 'home' ? (
+          <ListRow
+            title="Tax benefit"
+            subtitle="80C and 24(b) for each financial year"
+            icon="receipt-outline"
+            onPress={() => router.push(`/loan/tax?loanId=${loanId}`)}
+          />
+        ) : null}
         <ListRow
           title="Edit loan"
           subtitle="Change the amount, rate or tenure"

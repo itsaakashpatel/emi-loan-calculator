@@ -5,7 +5,9 @@ import { LargeTitleHeader } from '../../src/components/Header';
 import { Screen } from '../../src/components/Screen';
 import { NumberField, SegmentedControl, TimeField } from '../../src/components/inputs';
 import { Button, Card, IconGlyph, Label, ListRow } from '../../src/components/primitives';
+import { pickBackup, restoreBackup, shareBackup } from '../../src/backup';
 import { resetDatabase } from '../../src/db/client';
+import { BackupError, describeBackup } from '../../src/lib/backup';
 import { COMPOUNDING_LABELS, type Compounding } from '../../src/lib/finance/deposits';
 import { useCalculatorStore } from '../../src/store/calculator';
 import { useLoansStore } from '../../src/store/loans';
@@ -54,6 +56,47 @@ export default function SettingsScreen() {
         },
       ],
     );
+
+  const showError = (title: string, error: unknown) =>
+    Alert.alert(title, error instanceof BackupError ? error.message : 'Something went wrong. Try again.');
+
+  const backUp = () => {
+    void shareBackup().catch((error: unknown) => showError('Could not make the backup', error));
+  };
+
+  const restore = () => {
+    void (async () => {
+      try {
+        const backup = await pickBackup();
+        if (!backup) return;
+        Alert.alert(
+          'Replace your data with this backup?',
+          `The backup has ${describeBackup(backup)}. Your ${loanCount} saved loan${loanCount === 1 ? '' : 's'} and their payments on this phone will be replaced.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Replace',
+              style: 'destructive',
+              onPress: () => {
+                void (async () => {
+                  try {
+                    await restoreBackup(backup);
+                    await useSettingsStore.getState().hydrate();
+                    await refreshLoans();
+                    Alert.alert('Restored', `Your data now matches the backup: ${describeBackup(backup)}.`);
+                  } catch (error) {
+                    showError('Could not restore', error);
+                  }
+                })();
+              },
+            },
+          ],
+        );
+      } catch (error) {
+        showError('Could not open the backup', error);
+      }
+    })();
+  };
 
   return (
     <Screen floatingTabBar>
@@ -121,7 +164,20 @@ export default function SettingsScreen() {
           value={String(loanCount)}
           icon="wallet-outline"
         />
-        <ListRow title="Storage" value="On this device" icon="phone-portrait-outline" last />
+        <ListRow title="Storage" value="On this device" icon="phone-portrait-outline" />
+        <ListRow
+          title="Back up to a file"
+          subtitle="Save your loans and payments to Files or iCloud Drive"
+          icon="cloud-upload-outline"
+          onPress={backUp}
+        />
+        <ListRow
+          title="Restore from a backup"
+          subtitle="Replace the data on this phone with a backup file"
+          icon="cloud-download-outline"
+          onPress={restore}
+          last
+        />
       </Card>
 
       <Button label="Delete all saved data" variant="danger" icon="trash-outline" onPress={confirmClear} />
@@ -136,7 +192,7 @@ export default function SettingsScreen() {
         </Label>
         <Label size="micro" tone="faint" align="center" style={{ marginTop: spacing.md, maxWidth: 300 }}>
           Results are indicative. Your lender's schedule may differ slightly because of day-count
-          conventions and rounding. Tax treatment is not modelled.
+          conventions and rounding. Tax figures follow the law for FY 2025-26 and are a guide only.
         </Label>
       </View>
     </Screen>

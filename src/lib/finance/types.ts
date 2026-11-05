@@ -1,4 +1,4 @@
-export type PartPaymentFrequency = 'once' | 'monthly' | 'quarterly' | 'yearly';
+export type PartPaymentFrequency = 'once' | 'monthly' | 'quarterly' | 'half_yearly' | 'yearly';
 
 /** What a prepayment or rate change does to the rest of the loan. */
 export type AdjustMode = 'reduce_tenure' | 'reduce_emi';

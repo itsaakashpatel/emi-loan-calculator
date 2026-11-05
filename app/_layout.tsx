@@ -117,6 +117,9 @@ function AppStack() {
         <Stack.Screen name="loan/affordability" options={{ title: 'Loan Affordability' }} />
         <Stack.Screen name="loan/refinance" options={{ title: 'Loan Refinance' }} />
         <Stack.Screen name="loan/revise" options={{ title: 'Revised EMI and Tenure' }} />
+        <Stack.Screen name="loan/tax" options={{ title: 'Home Loan Tax Benefit' }} />
+        <Stack.Screen name="loan/card-emi" options={{ title: 'Card EMI Cost' }} />
+        <Stack.Screen name="loan/payoff" options={{ title: 'Which Loan to Prepay' }} />
         <Stack.Screen name="loans" options={{ title: 'Loan Profile' }} />
         <Stack.Screen name="emi/schedule" options={{ title: 'Amortisation Schedule' }} />
         <Stack.Screen name="emi/advanced" options={{ title: 'Advanced Options' }} />

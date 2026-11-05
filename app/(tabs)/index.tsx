@@ -31,6 +31,18 @@ const TILES: readonly TileSpec[] = [
   { href: '/loan/affordability', icon: 'speedometer-outline', label: 'Loan\nAffordability' },
   { href: '/loan/refinance', icon: 'sync-outline', label: 'Loan\nRefinance' },
   { href: '/emi/schedule', icon: 'list-outline', label: 'Amortisation\nSchedule' },
+  {
+    href: '/loan/tax',
+    icon: 'receipt-outline',
+    label: 'Home Loan\nTax Benefit',
+    hint: 'Tax saved under Section 80C and 24(b)',
+  },
+  {
+    href: '/loan/card-emi',
+    icon: 'card-outline',
+    label: 'Credit Card\n/ No-cost EMI',
+    hint: 'True cost of a card EMI or a no-cost EMI',
+  },
 ];
 
 export default function HomeTab() {

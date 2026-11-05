@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Screen } from '../../src/components/Screen';
 import { NumberField, RowField, SegmentedControl, StepperField, TenureField } from '../../src/components/inputs';
-import { Button, Card, Chip, EmptyState, IconChip, IconGlyph, KeyValueRow, Label } from '../../src/components/primitives';
+import { Button, Card, Chip, EmptyState, IconChip, IconGlyph, KeyValueRow, Label, SelectChipRow } from '../../src/components/primitives';
 import { computeSavings } from '../../src/lib/finance/emi';
 import { computeFlatEmi } from '../../src/lib/finance/revise';
 import { formatMonthYear } from '../../src/lib/format/date';
@@ -265,17 +265,22 @@ function PartPaymentForm({
   return (
     <Card title="Part payment">
       <NumberField label="Amount" value={amount} onChange={setAmount} prefix="currency" min={0} />
-      <SegmentedControl<PartPaymentFrequency>
-        label="How often"
-        segments={[
+      <Label size="caption" tone="muted" style={{ marginBottom: spacing.sm }}>
+        How often
+      </Label>
+      <SelectChipRow<PartPaymentFrequency>
+        options={[
           { value: 'once', label: 'One-time' },
           { value: 'monthly', label: 'Monthly' },
           { value: 'quarterly', label: 'Quarterly' },
+          { value: 'half_yearly', label: 'Half-yearly', hint: 'Every 6 months' },
           { value: 'yearly', label: 'Yearly' },
         ]}
         value={frequency}
         onChange={setFrequency}
+        wrap
       />
+      <View style={{ height: spacing.md }} />
       <NumberField
         label="Starting from installment"
         value={startMonth}
@@ -429,6 +434,7 @@ const FREQUENCY_LABEL: Record<PartPaymentFrequency, string> = {
   once: 'one-time',
   monthly: 'every month',
   quarterly: 'every quarter',
+  half_yearly: 'every 6 months',
   yearly: 'every year',
 };
 
