@@ -10,6 +10,7 @@ import { BackButton } from '../src/components/Header';
 import { GradientBackdrop } from '../src/components/Screen';
 import { getDb } from '../src/db/client';
 import { syncEmiReminders } from '../src/notifications';
+import { syncWidget } from '../src/widgets/sync';
 import { useCalculatorStore } from '../src/store/calculator';
 import { useLoansStore } from '../src/store/loans';
 import { useSettingsStore } from '../src/store/settings';
@@ -63,16 +64,22 @@ export default function RootLayout() {
 }
 
 /**
- * Keeps the scheduled EMI reminders in step with the saved loans and the reminder time. The store
+ * Keeps the scheduled EMI reminders and the home screen widget in step with the saved loans. The store
  * items change identity on every refresh, so this effect re-runs after any loan or payment change.
  */
 function ReminderSync() {
   const items = useLoansStore((s) => s.items);
   const notificationTime = useSettingsStore((s) => s.notificationTime);
+  const appLock = useSettingsStore((s) => s.appLock);
 
   useEffect(() => {
     void syncEmiReminders(items, notificationTime);
   }, [items, notificationTime]);
+
+  // The widget follows the same loans. With the app lock on, it hides the amounts.
+  useEffect(() => {
+    void syncWidget(items, appLock);
+  }, [items, appLock]);
 
   return null;
 }

@@ -24,6 +24,7 @@
       }
     },
     "plugins": [
+      "./plugins/with-local-notifications-only",
       "expo-router",
       "expo-sqlite",
       "expo-sharing",
@@ -47,8 +48,27 @@
           "faceIDPermission": "EMI Calculator uses Face ID to lock your saved loans."
         }
       ],
-      "expo-font",
-      "./plugins/with-local-notifications-only"
+      [
+        "expo-widgets",
+        {
+          "enablePushNotifications": false,
+          "widgets": [
+            {
+              "name": "NextEmi",
+              "displayName": "Next EMI",
+              "description": "Your next EMI, how much it is and when it is due.",
+              "supportedFamilies": [
+                "systemSmall",
+                "systemMedium",
+                "accessoryRectangular",
+                "accessoryInline"
+              ],
+              "contentMarginsDisabled": false
+            }
+          ]
+        }
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
