@@ -1,11 +1,14 @@
 import Constants from 'expo-constants';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, Switch, View } from 'react-native';
 
 import { LargeTitleHeader } from '../../src/components/Header';
 import { Screen } from '../../src/components/Screen';
 import { NumberField, SegmentedControl, TimeField } from '../../src/components/inputs';
 import { Button, Card, IconGlyph, Label, ListRow } from '../../src/components/primitives';
+import { canLock, unlock } from '../../src/app-lock';
+import { pickBackup, restoreBackup, shareBackup } from '../../src/backup';
 import { resetDatabase } from '../../src/db/client';
+import { BackupError, describeBackup } from '../../src/lib/backup';
 import { COMPOUNDING_LABELS, type Compounding } from '../../src/lib/finance/deposits';
 import { useCalculatorStore } from '../../src/store/calculator';
 import { useLoansStore } from '../../src/store/loans';
@@ -27,6 +30,9 @@ export default function SettingsScreen() {
   const setDefaultFdCompounding = useSettingsStore((s) => s.setDefaultFdCompounding);
   const notificationTime = useSettingsStore((s) => s.notificationTime);
   const setNotificationTime = useSettingsStore((s) => s.setNotificationTime);
+
+  const appLock = useSettingsStore((s) => s.appLock);
+  const setAppLock = useSettingsStore((s) => s.setAppLock);
 
   const loanCount = useLoansStore((s) => s.items.length);
   const refreshLoans = useLoansStore((s) => s.refresh);
@@ -55,6 +61,62 @@ export default function SettingsScreen() {
       ],
     );
 
+  const toggleLock = (next: boolean) => {
+    void (async () => {
+      if (!next) {
+        setAppLock(false);
+        return;
+      }
+      if (!(await canLock())) {
+        Alert.alert('Set up Face ID first', 'Turn on Face ID or a passcode in the iPhone Settings app, then try again.');
+        return;
+      }
+      // Ask once now, so the user knows the lock works before it can shut them out.
+      if (await unlock('Turn on the app lock')) setAppLock(true);
+    })();
+  };
+
+  const showError = (title: string, error: unknown) =>
+    Alert.alert(title, error instanceof BackupError ? error.message : 'Something went wrong. Try again.');
+
+  const backUp = () => {
+    void shareBackup().catch((error: unknown) => showError('Could not make the backup', error));
+  };
+
+  const restore = () => {
+    void (async () => {
+      try {
+        const backup = await pickBackup();
+        if (!backup) return;
+        Alert.alert(
+          'Replace your data with this backup?',
+          `The backup has ${describeBackup(backup)}. Your ${loanCount} saved loan${loanCount === 1 ? '' : 's'} and their payments on this phone will be replaced.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Replace',
+              style: 'destructive',
+              onPress: () => {
+                void (async () => {
+                  try {
+                    await restoreBackup(backup);
+                    await useSettingsStore.getState().hydrate();
+                    await refreshLoans();
+                    Alert.alert('Restored', `Your data now matches the backup: ${describeBackup(backup)}.`);
+                  } catch (error) {
+                    showError('Could not restore', error);
+                  }
+                })();
+              },
+            },
+          ],
+        );
+      } catch (error) {
+        showError('Could not open the backup', error);
+      }
+    })();
+  };
+
   return (
     <Screen floatingTabBar>
       <LargeTitleHeader title="Setting" />
@@ -76,6 +138,23 @@ export default function SettingsScreen() {
           value={notificationTime}
           onChange={setNotificationTime}
           hint="You get reminders three days before an EMI is due, and one after if it is unpaid."
+        />
+      </Card>
+
+      <Card title="Privacy" padded={false}>
+        <ListRow
+          title="Lock with Face ID"
+          subtitle="Ask for Face ID or your passcode when the app opens"
+          icon="lock-closed-outline"
+          right={
+            <Switch
+              value={appLock}
+              onValueChange={toggleLock}
+              trackColor={{ true: colors.accent }}
+              accessibilityLabel="Lock with Face ID"
+            />
+          }
+          last
         />
       </Card>
 
@@ -121,7 +200,20 @@ export default function SettingsScreen() {
           value={String(loanCount)}
           icon="wallet-outline"
         />
-        <ListRow title="Storage" value="On this device" icon="phone-portrait-outline" last />
+        <ListRow title="Storage" value="On this device" icon="phone-portrait-outline" />
+        <ListRow
+          title="Back up to a file"
+          subtitle="Save your loans and payments to Files or iCloud Drive"
+          icon="cloud-upload-outline"
+          onPress={backUp}
+        />
+        <ListRow
+          title="Restore from a backup"
+          subtitle="Replace the data on this phone with a backup file"
+          icon="cloud-download-outline"
+          onPress={restore}
+          last
+        />
       </Card>
 
       <Button label="Delete all saved data" variant="danger" icon="trash-outline" onPress={confirmClear} />
@@ -136,7 +228,7 @@ export default function SettingsScreen() {
         </Label>
         <Label size="micro" tone="faint" align="center" style={{ marginTop: spacing.md, maxWidth: 300 }}>
           Results are indicative. Your lender's schedule may differ slightly because of day-count
-          conventions and rounding. Tax treatment is not modelled.
+          conventions and rounding. Tax figures follow the law for FY 2025-26 and are a guide only.
         </Label>
       </View>
     </Screen>

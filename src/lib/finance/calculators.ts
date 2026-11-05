@@ -1,5 +1,5 @@
 /**
- * Declarative definitions for the seven investment calculators. Each one lists the fields it needs
+ * Declarative definitions for the investment and goal calculators. Each one lists the fields it needs
  * and a `compute` that turns those field values into a headline, a breakdown, a donut and a table —
  * so `app/invest/[type].tsx` renders all of them from a single layout.
  */
@@ -16,6 +16,19 @@ import {
 } from './deposits';
 import { calculateCompoundInterest, calculateSimpleInterest } from './interest';
 import { calculateInflationImpact, calculateRealValue, calculateStp, realRateOfReturn } from './inflation';
+import {
+  NPS_EXIT_AGE,
+  NPS_MIN_ANNUITY_PCT,
+  SSY_DEFAULT_RATE,
+  SSY_DEPOSIT_YEARS,
+  SSY_MAX_DEPOSIT,
+  SSY_MAX_OPENING_AGE,
+  SSY_MIN_DEPOSIT,
+  calculateGoalSip,
+  calculateNps,
+  calculateRetirement,
+  calculateSsy,
+} from './goals';
 import { calculateLumpsum, calculateSip, calculateSwp } from './sip';
 import { formatMoney, formatPercent, formatTenure } from '../format/money';
 
@@ -30,7 +43,11 @@ export type CalculatorId =
   | 'compound'
   | 'stp'
   | 'sip_inflation'
-  | 'inflation';
+  | 'inflation'
+  | 'goal_sip'
+  | 'retirement'
+  | 'nps'
+  | 'ssy';
 
 export const CALCULATOR_IDS: readonly CalculatorId[] = [
   'fd',
@@ -44,6 +61,10 @@ export const CALCULATOR_IDS: readonly CalculatorId[] = [
   'stp',
   'sip_inflation',
   'inflation',
+  'goal_sip',
+  'retirement',
+  'nps',
+  'ssy',
 ];
 
 export type FieldKind = 'money' | 'rate' | 'years' | 'months' | 'percent';
@@ -848,6 +869,228 @@ export const CALCULATORS: Record<CalculatorId, CalculatorSpec> = {
           rows: result.rows.map((row) => [`Year ${row.year}`, money(row.futureCost), money(row.purchasingPower)]),
         },
         note: 'Both figures use the same inflation rate: "future cost" is what today’s expenses will cost later, and "purchasing power" is what today’s money will be worth then. Real-world inflation varies year to year and by expense category.',
+      };
+    },
+  },
+  goal_sip: {
+    id: 'goal_sip',
+    title: 'Goal SIP Calculator',
+    short: 'Goal SIP',
+    blurb: 'The monthly SIP a goal needs',
+    icon: 'flag-outline',
+    fields: [
+      { key: 'target', label: 'Goal cost today', kind: 'money', min: 0, max: 100_000_000, step: 50_000, slider: true },
+      YEARS_FIELD,
+      { key: 'rate', label: 'Expected return', kind: 'rate', min: 0, max: 40, step: 0.5, slider: true },
+      { key: 'inflation', label: 'Inflation', kind: 'percent', min: 0, max: 20, step: 0.5, hint: 'How fast the goal cost rises' },
+      { key: 'saved', label: 'Already saved', kind: 'money', min: 0, max: 100_000_000, step: 10_000, optional: true },
+      { key: 'stepUp', label: 'Annual step-up', kind: 'percent', min: 0, max: 50, step: 1, optional: true, hint: 'Raise the SIP each year' },
+    ],
+    defaults: { target: 2_000_000, years: 8, rate: 12, inflation: 6, saved: 0, stepUp: 0 },
+    compute: (values, currency) => {
+      const stepUp = num(values, 'stepUp');
+      const result = calculateGoalSip({
+        targetToday: num(values, 'target'),
+        years: num(values, 'years', 1),
+        annualRate: num(values, 'rate'),
+        inflationPct: num(values, 'inflation'),
+        savedNow: num(values, 'saved'),
+        stepUpPct: stepUp,
+      });
+      const money = (v: number) => formatMoney(v, { currency });
+      return {
+        headline: {
+          label: 'Monthly SIP needed',
+          value: money(result.monthlySip),
+          caption: `to reach ${money(result.targetFuture)} in ${formatTenure(num(values, 'years', 1) * 12)}${
+            stepUp > 0 ? `, stepping up ${formatPercent(stepUp, 0)} a year` : ''
+          }`,
+        },
+        invested: result.invested,
+        gain: result.gain,
+        investedLabel: 'Invested',
+        gainLabel: 'Returns',
+        rows: [
+          { label: 'Goal cost then', value: money(result.targetFuture), emphasis: true },
+          { label: 'Your savings grow to', value: money(result.savedFuture) },
+          { label: 'Total invested', value: money(result.invested), swatch: 'invested' },
+          { label: 'Estimated returns', value: money(result.gain), tone: 'positive', swatch: 'gain' },
+        ],
+        chart: result.rows.map((row) => ({ label: `Y${row.year}`, invested: row.cumInvested, value: row.value })),
+        table: {
+          columns: ['Year', 'Invested', 'Value'],
+          rows: result.rows.map((row) => [`Year ${row.year}`, money(row.cumInvested), money(row.value)]),
+        },
+        note: 'The goal cost grows with inflation each year. The SIP is invested at the start of each month at a constant return.',
+        warning: result.monthlySip === 0 && num(values, 'target') > 0 ? 'Your savings already cover this goal.' : undefined,
+      };
+    },
+  },
+
+  retirement: {
+    id: 'retirement',
+    title: 'Retirement Calculator',
+    short: 'Retirement',
+    blurb: 'The corpus you need, and the SIP to build it',
+    icon: 'sunny-outline',
+    fields: [
+      { key: 'age', label: 'Current age', kind: 'years', min: 18, max: 70, step: 1, slider: true },
+      { key: 'retireAge', label: 'Retirement age', kind: 'years', min: 40, max: 75, step: 1, slider: true },
+      { key: 'lifeExpectancy', label: 'Plan until age', kind: 'years', min: 60, max: 100, step: 1 },
+      { key: 'expense', label: 'Monthly expenses today', kind: 'money', min: 0, max: 1_000_000, step: 1_000, slider: true },
+      { key: 'inflation', label: 'Inflation', kind: 'percent', min: 0, max: 15, step: 0.5 },
+      { key: 'preReturn', label: 'Return before retirement', kind: 'rate', min: 0, max: 20, step: 0.5 },
+      { key: 'postReturn', label: 'Return after retirement', kind: 'rate', min: 0, max: 15, step: 0.5 },
+      { key: 'saved', label: 'Retirement savings now', kind: 'money', min: 0, max: 500_000_000, step: 50_000, optional: true },
+    ],
+    defaults: { age: 30, retireAge: 60, lifeExpectancy: 85, expense: 50_000, inflation: 6, preReturn: 12, postReturn: 7, saved: 0 },
+    compute: (values, currency) => {
+      const result = calculateRetirement({
+        currentAge: num(values, 'age'),
+        retireAge: num(values, 'retireAge'),
+        lifeExpectancy: num(values, 'lifeExpectancy'),
+        monthlyExpense: num(values, 'expense'),
+        inflationPct: num(values, 'inflation'),
+        preReturn: num(values, 'preReturn'),
+        postReturn: num(values, 'postReturn'),
+        savedNow: num(values, 'saved'),
+      });
+      const money = (v: number) => formatMoney(v, { currency });
+      const finalValue = result.rows[result.rows.length - 1]?.value ?? 0;
+      return {
+        headline: {
+          label: 'Corpus you need at retirement',
+          value: money(result.corpusNeeded),
+          caption: `Invest ${money(result.monthlySip)} a month for ${result.yearsToRetire} years`,
+        },
+        invested: result.invested,
+        gain: Math.max(0, finalValue - result.invested),
+        investedLabel: 'Invested',
+        gainLabel: 'Returns',
+        rows: [
+          { label: 'Monthly SIP needed', value: money(result.monthlySip), emphasis: true },
+          { label: 'Monthly expenses at retirement', value: money(result.expenseAtRetirement), tone: 'warning' },
+          { label: 'Years in retirement', value: String(result.yearsInRetirement) },
+          { label: 'Your savings grow to', value: money(result.savedFuture) },
+          { label: 'Total invested', value: money(result.invested), swatch: 'invested' },
+          { label: 'Estimated returns', value: money(Math.max(0, finalValue - result.invested)), tone: 'positive', swatch: 'gain' },
+        ],
+        chart: result.rows.map((row) => ({ label: `${row.age}`, invested: row.cumInvested, value: row.value })),
+        table: {
+          columns: ['Age', 'Invested', 'Value'],
+          rows: result.rows.map((row) => [`Age ${row.age}`, money(row.cumInvested), money(row.value)]),
+        },
+        note: 'Expenses rise with inflation every year, before and after retirement. The corpus is what pays those expenses each month until the age you plan for, while the rest keeps earning the return after retirement.',
+        warning: num(values, 'retireAge') <= num(values, 'age') ? 'Retirement age must be above your current age.' : undefined,
+      };
+    },
+  },
+
+  nps: {
+    id: 'nps',
+    title: 'NPS Calculator',
+    short: 'NPS',
+    blurb: 'National Pension System corpus and pension at 60',
+    icon: 'umbrella-outline',
+    fields: [
+      { key: 'monthly', label: 'Monthly contribution', kind: 'money', min: 500, max: 500_000, step: 500, slider: true },
+      { key: 'age', label: 'Current age', kind: 'years', min: 18, max: 59, step: 1, slider: true },
+      { key: 'rate', label: 'Expected return', kind: 'rate', min: 0, max: 15, step: 0.5, slider: true },
+      { key: 'annuityPct', label: 'Share for annuity', kind: 'percent', min: NPS_MIN_ANNUITY_PCT, max: 100, step: 5, hint: 'At least 40%' },
+      { key: 'annuityRate', label: 'Annuity rate', kind: 'rate', min: 0, max: 12, step: 0.5, hint: 'What the pension plan pays' },
+    ],
+    defaults: { monthly: 5_000, age: 30, rate: 10, annuityPct: 40, annuityRate: 6 },
+    compute: (values, currency) => {
+      const result = calculateNps({
+        monthly: num(values, 'monthly'),
+        currentAge: num(values, 'age'),
+        annualRate: num(values, 'rate'),
+        annuityPct: num(values, 'annuityPct', NPS_MIN_ANNUITY_PCT),
+        annuityRate: num(values, 'annuityRate'),
+      });
+      const money = (v: number) => formatMoney(v, { currency });
+      return {
+        headline: {
+          label: 'Monthly pension',
+          value: money(result.monthlyPension),
+          caption: `from age ${NPS_EXIT_AGE}, plus a ${money(result.lumpSum)} lump sum`,
+        },
+        invested: result.invested,
+        gain: result.gain,
+        investedLabel: 'Contributed',
+        gainLabel: 'Returns',
+        rows: [
+          { label: 'Total contributed', value: money(result.invested), swatch: 'invested' },
+          { label: 'Estimated returns', value: money(result.gain), tone: 'positive', swatch: 'gain' },
+          { label: `Corpus at ${NPS_EXIT_AGE}`, value: money(result.corpus), emphasis: true },
+          { label: 'Lump sum, tax-free', value: money(result.lumpSum), tone: 'positive' },
+          { label: 'Used to buy the annuity', value: money(result.annuityCorpus) },
+        ],
+        chart: result.rows.map((row) => ({ label: `${row.age}`, invested: row.cumInvested, value: row.value })),
+        table: {
+          columns: ['Age', 'Contributed', 'Value'],
+          rows: result.rows.map((row) => [`Age ${row.age}`, money(row.cumInvested), money(row.value)]),
+        },
+        note: 'At 60 you can take up to 60% of the corpus as a tax-free lump sum; the rest buys an annuity that pays a taxable pension. In the old regime, up to ₹50,000 a year of contributions is deductible under Section 80CCD(1B), over the 80C limit.',
+      };
+    },
+  },
+
+  ssy: {
+    id: 'ssy',
+    title: 'Sukanya Samriddhi Calculator',
+    short: 'SSY',
+    blurb: 'Savings scheme for a girl child, 21 years',
+    icon: 'heart-outline',
+    fields: [
+      {
+        key: 'yearly',
+        label: 'Yearly deposit',
+        kind: 'money',
+        min: SSY_MIN_DEPOSIT,
+        max: SSY_MAX_DEPOSIT,
+        step: 500,
+        slider: true,
+        hint: '₹250 – ₹1,50,000 per year',
+      },
+      { key: 'age', label: "Girl's age today", kind: 'years', min: 0, max: SSY_MAX_OPENING_AGE, step: 1, slider: true },
+      { key: 'rate', label: 'Rate of interest', kind: 'rate', min: 0, max: 15, step: 0.1, slider: true },
+    ],
+    defaults: { yearly: 150_000, age: 2, rate: SSY_DEFAULT_RATE },
+    compute: (values, currency) => {
+      const result = calculateSsy({
+        yearly: num(values, 'yearly'),
+        annualRate: num(values, 'rate'),
+        girlAge: num(values, 'age'),
+      });
+      const money = (v: number) => formatMoney(v, { currency });
+      return {
+        headline: {
+          label: 'Maturity value',
+          value: money(result.maturity),
+          caption: `when she turns ${result.maturityAge}, after ${SSY_DEPOSIT_YEARS} years of deposits`,
+        },
+        invested: result.invested,
+        gain: result.interest,
+        investedLabel: 'Deposited',
+        gainLabel: 'Interest',
+        rows: [
+          { label: 'Total deposited', value: money(result.invested), swatch: 'invested' },
+          { label: 'Interest earned, tax-free', value: money(result.interest), tone: 'positive', swatch: 'gain' },
+          { label: 'Maturity value', value: money(result.maturity), emphasis: true },
+        ],
+        chart: result.rows.map((row) => ({
+          label: `Y${row.year}`,
+          invested: Math.min(row.year, SSY_DEPOSIT_YEARS) * Math.min(SSY_MAX_DEPOSIT, num(values, 'yearly')),
+          value: row.closing,
+        })),
+        table: {
+          columns: ['Year', 'Age', 'Deposit', 'Balance'],
+          rows: result.rows.map((row) => [`Year ${row.year}`, String(row.age), money(row.deposited), money(row.closing)]),
+        },
+        note: 'You deposit for the first 15 years; the account earns interest until it matures 21 years after opening. Deposits qualify for 80C in the old regime, and the interest and maturity are tax-free. The government sets the rate every quarter.',
+        warning:
+          num(values, 'yearly') > SSY_MAX_DEPOSIT ? `Deposits are capped at ${money(SSY_MAX_DEPOSIT)} a year.` : undefined,
       };
     },
   },

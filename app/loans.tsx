@@ -5,9 +5,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressRing } from '../src/components/charts';
 import { Screen } from '../src/components/Screen';
-import { Button, Card, Chip, EmptyState, IconChip, Label } from '../src/components/primitives';
+import { Button, Card, Chip, EmptyState, IconChip, KeyValueRow, Label, ListRow } from '../src/components/primitives';
+import { summarisePortfolio } from '../src/lib/finance/portfolio';
 import { daysBetween, formatDate, todayISO } from '../src/lib/format/date';
-import { formatMoney, formatTenure } from '../src/lib/format/money';
+import { formatMoney, formatPercent, formatTenure } from '../src/lib/format/money';
 import { LOAN_TYPES } from '../src/store/calculator';
 import { useLoansStore, type LoanWithProgress } from '../src/store/loans';
 import { useTheme } from '../src/theme/ThemeProvider';
@@ -53,17 +54,25 @@ export default function LoansScreen() {
     );
   }
 
-  const totals = active.reduce(
-    (acc, item) => ({
-      outstanding: acc.outstanding + item.outstanding,
-      monthly: acc.monthly + item.result.emi,
-    }),
-    { outstanding: 0, monthly: 0 },
+  const summary = summarisePortfolio(
+    items.map((item) => ({
+      id: item.loan.id,
+      name: item.loan.name,
+      annualRate: item.loan.annualRate,
+      outstanding: item.outstanding,
+      currentEmi: item.currentEmi,
+      interestRemaining: item.interestRemaining,
+      lastPaymentDate: item.result.lastPaymentDate,
+      nextDueDate: item.nextDueDate,
+      nextDueAmount: item.nextDueAmount,
+      closed: item.isClosed,
+    })),
   );
+  const money = (value: number) => formatMoney(value, { currency: 'INR' });
 
   return (
     <Screen>
-      {active.length > 0 ? (
+      {summary.activeCount > 0 ? (
         <Card>
           <View style={styles.totalsRow}>
             <View style={styles.flex}>
@@ -71,7 +80,7 @@ export default function LoansScreen() {
                 Total outstanding
               </Label>
               <Label size="display" weight="bold" tabular>
-                {formatMoney(totals.outstanding, { currency: active[0]!.loan.currency })}
+                {money(summary.outstanding)}
               </Label>
             </View>
             <View style={styles.totalsAside}>
@@ -79,10 +88,41 @@ export default function LoansScreen() {
                 Monthly
               </Label>
               <Label size="subhead" weight="semibold" tabular align="right">
-                {formatMoney(totals.monthly, { currency: active[0]!.loan.currency })}
+                {money(summary.monthlyEmi)}
               </Label>
             </View>
           </View>
+          <View style={{ marginTop: spacing.md }}>
+            <KeyValueRow
+              label="Interest still to pay"
+              value={money(summary.interestRemaining)}
+              tone="warning"
+              hint={summary.activeCount > 1 ? `Average rate ${formatPercent(summary.weightedRate)}` : undefined}
+            />
+            {summary.debtFreeDate ? (
+              <KeyValueRow label="Debt-free on" value={formatDate(summary.debtFreeDate)} />
+            ) : null}
+            {summary.next ? (
+              <KeyValueRow
+                label="Next EMI"
+                value={money(summary.next.amount)}
+                hint={`${summary.next.name}, ${formatDate(summary.next.date)}`}
+                last
+              />
+            ) : null}
+          </View>
+        </Card>
+      ) : null}
+
+      {summary.activeCount > 0 ? (
+        <Card padded={false}>
+          <ListRow
+            title="Have extra money?"
+            subtitle="See which loan to prepay first"
+            icon="trending-down-outline"
+            onPress={() => router.push('/loan/payoff')}
+            last
+          />
         </Card>
       ) : null}
 

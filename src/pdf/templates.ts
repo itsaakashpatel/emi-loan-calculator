@@ -4,6 +4,7 @@
  */
 
 import type { ComparisonResult } from '../lib/finance/compare';
+import type { TaxBenefitResult } from '../lib/finance/tax';
 import type { LoanResult, ScheduleRow } from '../lib/finance/types';
 import { formatDate, formatMonthYear, monthShort, parseISO, todayISO } from '../lib/format/date';
 import { formatMoney, formatPercent, formatTenure } from '../lib/format/money';
@@ -259,4 +260,50 @@ export function investmentHtml(data: InvestmentExport): string {
       ${data.note ? `<div class="note">${escape(data.note)}</div>` : ''}
     `,
   );
+}
+
+export interface TaxBenefitExport {
+  name: string;
+  /** e.g. `Old regime · Self-occupied · 30% slab`. */
+  basis: string;
+  result: TaxBenefitResult;
+}
+
+export function taxBenefitHtml({ name, basis, result }: TaxBenefitExport): string {
+  const money = (v: number) => formatMoney(v, { currency: 'INR', decimals: 0 });
+  const num = (v: number) => formatMoney(v, { currency: 'INR', decimals: 0, symbol: false });
+  const facts = [
+    kv('Interest paid', money(result.totalInterest)),
+    kv('Principal repaid', money(result.totalPrincipal)),
+    kv('Interest deduction, 24(b)', money(result.totalInterestDeduction)),
+    kv('Principal deduction, 80C', money(result.totalPrincipalDeduction)),
+    kv('Tax saved, cess included', money(result.totalTaxSaved)),
+  ];
+  if (result.preConstructionInterest > 0) {
+    facts.push(kv('Pre-construction interest', money(result.preConstructionInterest)));
+  }
+  const rows = result.years
+    .map(
+      (y) => `<tr>
+        <td>${escape(y.label)}${y.underConstruction ? '<span class="tag">Before possession</span>' : ''}</td>
+        <td>${num(y.interest)}</td>
+        <td>${num(y.principal)}</td>
+        <td>${num(y.interestDeduction)}</td>
+        <td>${num(y.principalDeduction)}</td>
+        <td>${num(y.taxSaved)}</td>
+      </tr>`,
+    )
+    .join('');
+  const body = `
+    <div class="hero"><div class="caption">Tax saved over the loan</div><div class="amount">${money(result.totalTaxSaved)}</div><div class="caption">${escape(basis)}</div></div>
+    ${facts.join('')}
+    <h2>By financial year (amounts in &#8377;)</h2>
+    <table>
+      <thead><tr><th>Year</th><th>Interest</th><th>Principal</th><th>24(b)</th><th>80C</th><th>Tax saved</th></tr></thead>
+      <tbody>${rows}
+        <tr class="total"><td>Total</td><td>${num(result.totalInterest)}</td><td>${num(result.totalPrincipal)}</td><td>${num(result.totalInterestDeduction)}</td><td>${num(result.totalPrincipalDeduction)}</td><td>${num(result.totalTaxSaved)}</td></tr>
+      </tbody>
+    </table>
+    <div class="note">A guide only, based on the Income Tax Act for FY 2025-26. 80C is shared with other items such as EPF, PPF and life cover. Surcharge is not included. Check with a tax adviser before you file.</div>`;
+  return page(name, 'Home loan tax benefit', body);
 }

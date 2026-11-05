@@ -13,9 +13,10 @@ import { computeSavings } from '../../src/lib/finance/emi';
 import { daysBetween, describeMonthGap, formatDate, todayISO } from '../../src/lib/format/date';
 import { formatMoney, formatTenure, getCurrency, roundToTotal } from '../../src/lib/format/money';
 import type { AdjustMode, ScheduleRow } from '../../src/lib/finance/types';
-import { sharePdf } from '../../src/pdf/share';
+import { scheduleCsv } from '../../src/lib/csv';
+import { shareCsv, sharePdf } from '../../src/pdf/share';
 import { loanSummaryHtml, scheduleHtml } from '../../src/pdf/templates';
-import { useLoansStore } from '../../src/store/loans';
+import { loanInputOf, useLoansStore } from '../../src/store/loans';
 import { useTheme } from '../../src/theme/ThemeProvider';
 
 export default function LoanDetailScreen() {
@@ -32,6 +33,7 @@ export default function LoanDetailScreen() {
   const remove = useLoansStore((s) => s.remove);
 
   const [prepayOpen, setPrepayOpen] = useState(false);
+  const [remainingOpen, setRemainingOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -51,29 +53,20 @@ export default function LoanDetailScreen() {
   const savings = useMemo(
     () =>
       item
-        ? computeSavings({
-            principal: item.loan.principal,
-            annualRate: item.loan.annualRate,
-            tenureMonths: item.loan.tenureMonths,
-            startDate: item.loan.startDate,
-            firstPaymentDate: item.loan.firstPaymentDate ?? undefined,
-            advanceEmis: item.loan.advanceEmis,
-            fees: item.loan.fees,
-            events: item.loan.events,
-          })
+        ? computeSavings(loanInputOf(item.loan))
         : null,
     [item],
   );
 
   useHeaderAction({
     icon: 'share-outline',
-    label: 'Export as PDF',
+    label: 'Export',
     enabled: Boolean(item),
     onPress: () => {
       if (!item) return;
       const { loan: current, result: figures } = item;
       // Two documents, one button: ask rather than guess which one the user wants.
-      Alert.alert('Export as PDF', undefined, [
+      Alert.alert('Export', undefined, [
         {
           text: 'Loan summary',
           onPress: () =>
@@ -83,6 +76,10 @@ export default function LoanDetailScreen() {
           text: 'Full schedule',
           onPress: () =>
             void sharePdf(scheduleHtml(figures, current.currency, current.name), 'loan-schedule'),
+        },
+        {
+          text: 'Schedule as CSV for Excel',
+          onPress: () => void shareCsv(scheduleCsv(figures), `${current.name}-schedule`),
         },
         { text: 'Cancel', style: 'cancel' },
       ]);
@@ -197,8 +194,26 @@ export default function LoanDetailScreen() {
             label="Still to pay"
             value={money(item.remainingAmount)}
             hint={item.isClosed ? 'Loan closed' : `${result.tenureMonths - item.paidCount} instalments left`}
-            last
+            emphasis
+            last={!remainingOpen}
+            expand={{ open: remainingOpen, onToggle: () => setRemainingOpen((open) => !open) }}
           />
+          {remainingOpen ? (
+            <>
+              <KeyValueRow
+                label="Principal to pay"
+                value={money(Math.max(0, item.remainingAmount - item.interestRemaining))}
+                swatch={colors.principal}
+              />
+              <KeyValueRow
+                label="Interest to pay"
+                value={money(item.interestRemaining)}
+                tone="warning"
+                swatch={colors.interest}
+                last
+              />
+            </>
+          ) : null}
         </View>
       </Card>
 
@@ -275,6 +290,14 @@ export default function LoanDetailScreen() {
           icon="cash-outline"
           onPress={() => setPrepayOpen(true)}
         />
+        {loan.type === 'home' ? (
+          <ListRow
+            title="Tax benefit"
+            subtitle="80C and 24(b) for each financial year"
+            icon="receipt-outline"
+            onPress={() => router.push(`/loan/tax?loanId=${loanId}`)}
+          />
+        ) : null}
         <ListRow
           title="Edit loan"
           subtitle="Change the amount, rate or tenure"

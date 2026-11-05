@@ -1,16 +1,18 @@
 import { useMemo } from 'react';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 
 import { useHeaderAction } from '../../src/components/Header';
+import { CompactField, DateField, TenureField } from '../../src/components/inputs';
 import { YearlyOutflowChart } from '../../src/components/LoanSummary';
 import { ScheduleTable } from '../../src/components/ScheduleTable';
 import { Screen } from '../../src/components/Screen';
 import { Card, KeyValueRow, Label } from '../../src/components/primitives';
 import { amortize } from '../../src/lib/finance/emi';
-import { formatMoney, formatTenure, getCurrency } from '../../src/lib/format/money';
-import { sharePdf } from '../../src/pdf/share';
+import { amountToWords, formatMoney, formatTenure, getCurrency } from '../../src/lib/format/money';
+import { scheduleCsv } from '../../src/lib/csv';
+import { shareCsv, sharePdf } from '../../src/pdf/share';
 import { scheduleHtml } from '../../src/pdf/templates';
-import { useLoanInput } from '../../src/store/calculator';
+import { useCalculatorStore, useLoanInput } from '../../src/store/calculator';
 import { useCurrency } from '../../src/store/settings';
 import { useTheme } from '../../src/theme/ThemeProvider';
 
@@ -19,17 +21,61 @@ export default function ScheduleScreen() {
   const currency = useCurrency();
 
   const { spacing } = useTheme();
+  const grouping = getCurrency(currency).grouping;
+
+  // The same values as the EMI calculator: a change here carries back there, and the other way round.
+  const principal = useCalculatorStore((s) => s.principal);
+  const annualRate = useCalculatorStore((s) => s.annualRate);
+  const tenureMonths = useCalculatorStore((s) => s.tenureMonths);
+  const startDate = useCalculatorStore((s) => s.startDate);
+  const revision = useCalculatorStore((s) => s.revision);
+  const setPrincipal = useCalculatorStore((s) => s.setPrincipal);
+  const setAnnualRate = useCalculatorStore((s) => s.setAnnualRate);
+  const setTenureMonths = useCalculatorStore((s) => s.setTenureMonths);
+  const setStartDate = useCalculatorStore((s) => s.setStartDate);
+
   const result = useMemo(() => amortize(input), [input]);
   const money = (value: number) => formatMoney(value, { currency });
 
   useHeaderAction({
     icon: 'share-outline',
-    label: 'Export schedule as PDF',
-    onPress: () => void sharePdf(scheduleHtml(result, currency), 'amortisation-schedule'),
+    label: 'Export schedule',
+    onPress: () =>
+      Alert.alert('Export schedule', undefined, [
+        { text: 'PDF', onPress: () => void sharePdf(scheduleHtml(result, currency), 'amortisation-schedule') },
+        { text: 'CSV for Excel', onPress: () => void shareCsv(scheduleCsv(result), 'amortisation-schedule') },
+        { text: 'Cancel', style: 'cancel' },
+      ]),
   });
 
   return (
     <Screen>
+      <Card>
+        <CompactField
+          label="Loan amount"
+          value={principal}
+          onChange={setPrincipal}
+          prefix="currency"
+          caption={amountToWords(principal, grouping)}
+          min={0}
+          resetKey={revision}
+          slider={{ min: 50_000, max: 20_000_000, step: 50_000, minLabel: '50 K', maxLabel: '2 Cr' }}
+        />
+        <CompactField
+          label="Interest rate"
+          value={annualRate}
+          onChange={setAnnualRate}
+          suffix="%"
+          decimals={2}
+          min={0}
+          max={60}
+          resetKey={revision}
+          slider={{ min: 1, max: 24, step: 0.05, minLabel: '1%', maxLabel: '24%' }}
+        />
+        <TenureField label="Tenure" months={tenureMonths} onChange={setTenureMonths} resetKey={revision} slider compact />
+        <DateField label="Loan start date" value={startDate} onChange={setStartDate} />
+      </Card>
+
       <Card>
         <KeyValueRow label="Loan amount" value={money(result.principal)} />
         <KeyValueRow label="EMI" value={money(result.emi)} emphasis />

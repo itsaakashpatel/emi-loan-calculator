@@ -127,7 +127,8 @@ function rowToLoan(row: LoanRow, events: LoanEvent[]): SavedLoan {
   };
 }
 
-async function insertEvents(loanId: number, events: LoanEvent[]): Promise<void> {
+/** Writes a loan's adjustments. Also used by the backup restore. */
+export async function insertEvents(loanId: number, events: LoanEvent[]): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
   for (const event of events) {

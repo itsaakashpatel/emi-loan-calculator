@@ -197,12 +197,19 @@ interface KeyValueRowProps {
   swatch?: string;
   emphasis?: boolean;
   last?: boolean;
+  /** Makes the row a button that shows a chevron: `down` when closed, `up` when open. */
+  expand?: { open: boolean; onToggle: () => void };
 }
 
-export function KeyValueRow({ label, value, hint, tone, swatch, emphasis, last }: KeyValueRowProps) {
+export function KeyValueRow({ label, value, hint, tone, swatch, emphasis, last, expand }: KeyValueRowProps) {
   const { colors, spacing } = useTheme();
   return (
-    <View
+    <Pressable
+      disabled={!expand}
+      onPress={expand?.onToggle}
+      accessibilityRole={expand ? 'button' : undefined}
+      accessibilityLabel={expand ? `${label}, ${value}` : undefined}
+      accessibilityState={expand ? { expanded: expand.open } : undefined}
       style={[
         styles.kvRow,
         {
@@ -229,7 +236,10 @@ export function KeyValueRow({ label, value, hint, tone, swatch, emphasis, last }
       >
         {value}
       </Label>
-    </View>
+      {expand ? (
+        <IconGlyph name={expand.open ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textFaint} />
+      ) : null}
+    </Pressable>
   );
 }
 

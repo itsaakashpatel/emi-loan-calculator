@@ -2,7 +2,7 @@
   "expo": {
     "name": "EMI Calculator",
     "slug": "emi-loan-calculator",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "emicalc",
@@ -24,6 +24,7 @@
       }
     },
     "plugins": [
+      "./plugins/with-local-notifications-only",
       "expo-router",
       "expo-sqlite",
       "expo-sharing",
@@ -41,8 +42,33 @@
           }
         }
       ],
-      "expo-font",
-      "./plugins/with-local-notifications-only"
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "EMI Calculator uses Face ID to lock your saved loans."
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "enablePushNotifications": false,
+          "widgets": [
+            {
+              "name": "NextEmi",
+              "displayName": "Next EMI",
+              "description": "Your next EMI, how much it is and when it is due.",
+              "supportedFamilies": [
+                "systemSmall",
+                "systemMedium",
+                "accessoryRectangular",
+                "accessoryInline"
+              ],
+              "contentMarginsDisabled": false
+            }
+          ]
+        }
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>No-Cost EMI Calculator: Find the Hidden Cost (GST and Fee)</title>
+<meta name="description" content="A no-cost EMI is not free. Enter the price, your bank's rate, tenure and fee to see the GST and fee you still pay, and the real interest rate.">
+<link rel="canonical" href="https://itsaakashpatel.github.io/emi-loan-calculator/no-cost-emi-calculator.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="No-Cost EMI Calculator: Find the Hidden Cost">
+<meta property="og:description" content="See the GST and processing fee you still pay on a no-cost EMI, and the real rate. Free, runs in your browser.">
+<meta property="og:url" content="https://itsaakashpatel.github.io/emi-loan-calculator/no-cost-emi-calculator.html">
+<link rel="stylesheet" href="assets/site.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "No-Cost EMI Calculator",
+      "url": "https://itsaakashpatel.github.io/emi-loan-calculator/no-cost-emi-calculator.html",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "description": "Shows the GST on interest and the processing fee that you still pay on a no-cost EMI, the seller discount, and the real interest rate.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+      "isPartOf": { "@type": "MobileApplication", "name": "Loan EMI & SIP Calculator", "url": "https://apps.apple.com/in/app/id6801948279" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "Is a no-cost EMI really free?", "acceptedAnswer": { "@type": "Answer", "text": "No. The bank still charges interest. The seller covers it with an upfront discount, so the instalments add up to the price. You still pay 18% GST on that interest and the processing fee with its own GST." } },
+        { "@type": "Question", "name": "Who pays the GST on a no-cost EMI?", "acceptedAnswer": { "@type": "Answer", "text": "You do. The seller's discount covers the interest, but the GST charged on that interest is billed to your card each month." } },
+        { "@type": "Question", "name": "How is the real interest rate worked out?", "acceptedAnswer": { "@type": "Answer", "text": "The calculator finds the yearly rate at which the price, less the fee paid on day one, grows into the instalments plus GST that you actually pay." } },
+        { "@type": "Question", "name": "Should I take a no-cost EMI or a cash discount?", "acceptedAnswer": { "@type": "Answer", "text": "Compare the discount you give up with the hidden cost shown here, and with what the money would earn if you paid in instalments. The calculator gives you the first number. The other two are your call." } }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+  <nav class="top" aria-label="Site">
+    <a href="./">Home</a>
+    <a href="./no-cost-emi-calculator.html" aria-current="page">No-cost EMI calculator</a>
+    <a href="./index.html#support">Support</a>
+    <a href="./privacy-policy.html">Privacy</a>
+  </nav>
+
+  <h1>No-Cost EMI Calculator</h1>
+  <p class="lead">A no-cost EMI is not free. The bank still charges interest, and you still pay GST on it and a processing fee. Enter your numbers to see the real cost.</p>
+
+  <form class="card" id="f" onsubmit="return false" aria-label="No-cost EMI calculator">
+    <div role="group" aria-labelledby="kind-l">
+      <span id="kind-l" style="font-weight:600;font-size:.92rem">Type of EMI</span>
+      <div class="seg">
+        <button type="button" id="k-no" aria-pressed="true">No-cost EMI</button>
+        <button type="button" id="k-card" aria-pressed="false">Card EMI</button>
+      </div>
+    </div>
+
+    <label for="price">Price (₹)</label>
+    <input id="price" inputmode="decimal" value="60000" autocomplete="off">
+
+    <label for="rate">Interest rate the bank charges (% a year)</label>
+    <input id="rate" inputmode="decimal" value="16" autocomplete="off">
+    <p class="hint">The bank still charges this on a no-cost EMI. Use the rate on your card statement. 16 is an example, not a quote.</p>
+
+    <label for="months">Tenure (months)</label>
+    <input id="months" inputmode="numeric" value="6" autocomplete="off">
+
+    <label for="fee">Processing fee before GST (₹)</label>
+    <input id="fee" inputmode="decimal" value="199" autocomplete="off">
+  </form>
+
+  <section class="card result" aria-live="polite" aria-labelledby="res-h">
+    <div id="res-h" class="note">Hidden cost of this no-cost EMI</div>
+    <div class="big" id="extra">–</div>
+    <p class="note" id="summary"></p>
+    <div id="rows"></div>
+  </section>
+
+  <p class="note">Indicative. Banks round and bill a little differently, and some waive the fee. Check your own statement. This is a calculator, not financial advice.</p>
+
+  <p><a class="btn" href="https://apps.apple.com/in/app/id6801948279">Track every EMI in the iPhone app</a></p>
+
+  <h2>How a no-cost EMI works</h2>
+  <p>The seller sets the EMI at the price divided by the number of months, so the instalments add up to the price. The bank lends you less than the price: only the amount that those instalments repay at its interest rate. The gap is the interest, and the seller gives it to you as an upfront discount.</p>
+  <p>That discount covers the interest only. Two charges remain:</p>
+  <ul>
+    <li><strong>GST on the interest.</strong> The bank charges 18% GST on the interest each month, and it is billed to you.</li>
+    <li><strong>The processing fee, and GST on the fee.</strong> You pay this once, at the start.</li>
+  </ul>
+
+  <h2>Worked example</h2>
+  <p>A ₹60,000 purchase on a 6 month no-cost EMI, with the bank charging 16% a year and a ₹199 fee:</p>
+  <div class="card">
+    <table>
+      <tbody>
+        <tr><td>Monthly EMI (₹60,000 ÷ 6)</td><td>₹10,000.00</td></tr>
+        <tr><td>Amount the bank really lends</td><td>₹57,296.65</td></tr>
+        <tr><td>Seller discount (the interest)</td><td>₹2,703.35</td></tr>
+        <tr><td>GST on the interest</td><td>₹486.60</td></tr>
+        <tr><td>Processing fee plus GST</td><td>₹234.82</td></tr>
+        <tr><td><strong>Hidden cost</strong></td><td><strong>₹721.44</strong></td></tr>
+        <tr><td>Real rate, a year</td><td>4.13%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">The calculator rounds paise month by month, so the lines can differ from the total by a few paise.</p>
+  <p>So the plan costs about ₹721 more than the price, not nothing. The same ₹60,000 as a standard card EMI at 16% would cost ₹3,575 extra. The no-cost plan is far cheaper, but it is not free.</p>
+
+  <h2>How the calculator works</h2>
+  <ol>
+    <li>EMI = price ÷ months.</li>
+    <li>Bank lends = the present value of those EMIs at your rate (the standard reducing-balance formula).</li>
+    <li>Seller discount = price − bank lends.</li>
+    <li>Each month: interest = balance × monthly rate, and GST = 18% of that interest.</li>
+    <li>Hidden cost = everything you pay (EMIs, GST, fee and fee GST) − the price.</li>
+    <li>Real rate = the yearly rate at which the price, less the day-one fee, grows into what you pay.</li>
+  </ol>
+  <p class="note">This page uses the same maths as the Loan EMI &amp; SIP Calculator app. Your numbers stay in your browser and are not sent anywhere.</p>
+
+  <h2>Questions</h2>
+  <dl>
+    <dt>Is a no-cost EMI really free?</dt>
+    <dd>No. The bank still charges interest. The seller covers it with an upfront discount, so the instalments add up to the price. You still pay 18% GST on that interest and the processing fee with its own GST.</dd>
+
+    <dt>Who pays the GST on a no-cost EMI?</dt>
+    <dd>You do. The seller's discount covers the interest, but the GST charged on that interest is billed to your card each month.</dd>
+
+    <dt>Should I take a no-cost EMI or a cash discount?</dt>
+    <dd>Compare the discount you give up with the hidden cost shown above, and with what the money would earn if you paid in instalments. This page gives you the first number. The other two are your call.</dd>
+
+    <dt>Why is the real rate so low?</dt>
+    <dd>Because the seller covers the interest. The rate shown is only what is left: the GST on the interest and the fee, spread over what you effectively borrowed.</dd>
+  </dl>
+
+  <footer>
+    <a href="./">Loan EMI &amp; SIP Calculator</a>
+    <a href="./privacy-policy.html">Privacy policy</a>
+    <a href="https://apps.apple.com/in/app/id6801948279">App Store</a>
+  </footer>
+
+<script src="assets/card-emi.js"></script>
+<script>
+(function () {
+  var kind = 'no_cost';
+  var $ = function (id) { return document.getElementById(id); };
+  var inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var num = function (id) { var v = parseFloat(String($(id).value).replace(/,/g, '')); return isFinite(v) && v >= 0 ? v : 0; };
+
+  function row(label, value) {
+    var d = document.createElement('div'); d.className = 'row';
+    var a = document.createElement('span'); a.textContent = label;
+    var b = document.createElement('strong'); b.textContent = value;
+    d.appendChild(a); d.appendChild(b); return d;
+  }
+
+  function render() {
+    var price = num('price'), months = Math.round(num('months'));
+    var box = $('rows'); box.textContent = '';
+    if (price <= 0 || months < 1 || months > 120) {
+      $('extra').textContent = '–';
+      $('summary').textContent = 'Enter a price and a tenure of 1 to 120 months.';
+      return;
+    }
+    var r = EmiMath.calculateCardEmi({ kind: kind, price: price, annualRate: Math.min(num('rate'), 60), tenureMonths: months, processingFee: num('fee') });
+    var noCost = kind === 'no_cost';
+    $('res-h').textContent = noCost ? 'Hidden cost of this no-cost EMI' : 'Extra cost of this card EMI';
+    $('extra').textContent = inr.format(r.extraCost);
+    $('summary').textContent = 'You pay ' + inr.format(r.totalPaid) + ' for a ' + inr.format(price) + ' purchase. That is like a loan at ' + r.effectiveAnnualRate.toFixed(2) + '% a year.';
+    box.appendChild(row('Monthly EMI', inr.format(r.emi)));
+    box.appendChild(row('Bank lends you', inr.format(r.financed)));
+    if (noCost) box.appendChild(row('Seller discount (the interest)', inr.format(r.discount)));
+    else box.appendChild(row('Interest', inr.format(r.totalInterest)));
+    box.appendChild(row('GST on the interest', inr.format(r.gstOnInterest)));
+    box.appendChild(row('Processing fee plus GST', inr.format(r.processingFee + r.gstOnFee)));
+    box.appendChild(row('Total you pay', inr.format(r.totalPaid)));
+  }
+
+  function setKind(k) {
+    kind = k;
+    $('k-no').setAttribute('aria-pressed', String(k === 'no_cost'));
+    $('k-card').setAttribute('aria-pressed', String(k === 'standard'));
+    render();
+  }
+  $('k-no').addEventListener('click', function () { setKind('no_cost'); });
+  $('k-card').addEventListener('click', function () { setKind('standard'); });
+  ['price', 'rate', 'months', 'fee'].forEach(function (id) { $(id).addEventListener('input', render); });
+  render();
+})();
+</script>
+</body>
+</html>

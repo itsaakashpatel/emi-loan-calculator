@@ -4,6 +4,7 @@ import { TileGrid, type TileSpec } from '../../src/components/Tile';
 
 const TILES: readonly TileSpec[] = [
   { href: '/tools/gst', icon: 'receipt-outline', label: 'GST\nCalculator' },
+  { href: '/tools/hra', icon: 'home-outline', label: 'HRA\nExemption', hint: 'House rent allowance exemption' },
   { href: '/tools/currency', icon: 'globe-outline', label: 'Currency\nConverter' },
   { href: '/tools/percentage', icon: 'pie-chart-outline', label: 'Percentage\nCalculator' },
   {
