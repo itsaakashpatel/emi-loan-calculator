@@ -70,3 +70,13 @@ python3 store/aso-rank.py "emi tracker" "loan tracker" "hra calculator" "retirem
 ```
 
 Run it on release day, then after two and four weeks.
+
+## Screenshots (release checklist)
+
+Every release that changes a screen must also refresh the screenshots. Each image carries keyword
+captions as written text, because Apple indexes that text.
+
+- Capture on the iPhone 17 Pro Max simulator (1320 x 2868) with a Release build. Deep link with `emicalc:///<route>`.
+- English captions: `store/koubou.yaml` and `store/koubou-6_5.yaml`.
+- Hindi captions: `store/koubou-hi.yaml` and `store/koubou-6_5-hi.yaml`. They use `/System/Library/Fonts/Kohinoor.ttc`, because the default font has no Devanagari glyphs.
+- Upload per locale and size with `asc screenshots upload --locale <loc> --path <dir>/<device folder> --device-type IPHONE_69|IPHONE_65 --replace --confirm`. Cancel a waiting submission first.
