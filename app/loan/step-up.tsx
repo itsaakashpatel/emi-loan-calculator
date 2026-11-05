@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { DataTable } from '../../src/components/DataTable';
 import { Screen } from '../../src/components/Screen';
@@ -30,17 +31,34 @@ export default function StepUpEmiScreen() {
   return (
     <Screen>
       <Card>
-        <Label size="caption" tone="muted">
-          Interest you save
-        </Label>
-        <Label size="hero" weight="bold" tabular tone="positive">
-          {money(result.interestSaved)}
-        </Label>
-        <Label size="micro" tone="faint">
+        <View style={styles.heroRow}>
+          <View style={styles.heroCol}>
+            <Label size="caption" tone="muted">
+              Interest you save
+            </Label>
+            <Label size="title" weight="bold" tabular tone="positive">
+              {money(result.interestSaved)}
+            </Label>
+          </View>
+          <View style={styles.heroCol}>
+            <Label size="caption" tone="muted">
+              Time you save
+            </Label>
+            <Label size="title" weight="bold" tabular tone="positive">
+              {result.monthsSaved > 0 ? formatTenure(result.monthsSaved) : '0'}
+            </Label>
+          </View>
+        </View>
+        <Label size="body" weight="bold" style={{ marginTop: spacing.md }}>
           {result.monthsSaved > 0
-            ? `The loan closes ${formatTenure(result.monthsSaved)} early, in ${formatTenure(result.months)}.`
+            ? `You finish the loan in ${formatTenure(result.months)}`
             : 'Set a yearly rise to see the saving.'}
         </Label>
+        {result.monthsSaved > 0 ? (
+          <Label size="micro" tone="faint">
+            A regular EMI takes {formatTenure(result.flatMonths)}.
+          </Label>
+        ) : null}
       </Card>
 
       <Card title="Loan">
@@ -63,14 +81,7 @@ export default function StepUpEmiScreen() {
         <KeyValueRow label="EMI in year 1" value={money(result.startEmi)} hint="Same for both" />
         <KeyValueRow label="EMI in the final year" value={money(result.finalEmi)} />
         <KeyValueRow label="Interest, flat EMI" value={money(result.flatInterest)} />
-        <KeyValueRow label="Interest, step-up EMI" value={money(result.totalInterest)} tone="positive" />
-        <KeyValueRow
-          label="You finish the loan in"
-          value={formatTenure(result.months)}
-          hint={`a regular EMI takes ${formatTenure(result.flatMonths)}. You save ${formatTenure(result.monthsSaved)}.`}
-          emphasis
-          last
-        />
+        <KeyValueRow label="Interest, step-up EMI" value={money(result.totalInterest)} tone="positive" last />
       </Card>
 
       <Card title="Year by year">
@@ -93,3 +104,8 @@ export default function StepUpEmiScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  heroRow: { flexDirection: 'row', gap: 16 },
+  heroCol: { flex: 1 },
+});

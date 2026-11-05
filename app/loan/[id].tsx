@@ -33,6 +33,7 @@ export default function LoanDetailScreen() {
   const remove = useLoansStore((s) => s.remove);
 
   const [prepayOpen, setPrepayOpen] = useState(false);
+  const [remainingOpen, setRemainingOpen] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -194,19 +195,25 @@ export default function LoanDetailScreen() {
             value={money(item.remainingAmount)}
             hint={item.isClosed ? 'Loan closed' : `${result.tenureMonths - item.paidCount} instalments left`}
             emphasis
+            last={!remainingOpen}
+            expand={{ open: remainingOpen, onToggle: () => setRemainingOpen((open) => !open) }}
           />
-          <KeyValueRow
-            label="Principal to pay"
-            value={money(Math.max(0, item.remainingAmount - item.interestRemaining))}
-            swatch={colors.principal}
-          />
-          <KeyValueRow
-            label="Interest to pay"
-            value={money(item.interestRemaining)}
-            tone="warning"
-            swatch={colors.interest}
-            last
-          />
+          {remainingOpen ? (
+            <>
+              <KeyValueRow
+                label="Principal to pay"
+                value={money(Math.max(0, item.remainingAmount - item.interestRemaining))}
+                swatch={colors.principal}
+              />
+              <KeyValueRow
+                label="Interest to pay"
+                value={money(item.interestRemaining)}
+                tone="warning"
+                swatch={colors.interest}
+                last
+              />
+            </>
+          ) : null}
         </View>
       </Card>
 
