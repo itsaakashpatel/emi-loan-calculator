@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AppLockGate } from '../src/components/AppLock';
 import { BackButton } from '../src/components/Header';
 import { GradientBackdrop } from '../src/components/Screen';
 import { getDb } from '../src/db/client';
@@ -53,7 +54,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <ReminderSync />
-        <AppStack />
+        <AppLockGate>
+          <AppStack />
+        </AppLockGate>
       </ThemeProvider>
     </SafeAreaProvider>
   );

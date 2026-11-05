@@ -41,6 +41,12 @@
           }
         }
       ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "EMI Calculator uses Face ID to lock your saved loans."
+        }
+      ],
       "expo-font",
       "./plugins/with-local-notifications-only"
     ],

@@ -14,12 +14,15 @@ export interface SettingsState {
   defaultFdCompounding: Compounding;
   /** `HH:MM` 24-hour clock, the time of day EMI reminders fire. */
   notificationTime: string;
+  /** Ask for Face ID or the passcode when the app opens. */
+  appLock: boolean;
   hydrate: () => Promise<void>;
   setThemePreference: (preference: ThemePreference) => void;
   setDefaultRate: (rate: number) => void;
   setDefaultTenureYears: (years: number) => void;
   setDefaultFdCompounding: (compounding: Compounding) => void;
   setNotificationTime: (time: string) => void;
+  setAppLock: (enabled: boolean) => void;
 }
 
 const KEYS = {
@@ -28,10 +31,14 @@ const KEYS = {
   tenure: 'default_tenure_years',
   fdCompounding: 'default_fd_compounding',
   notificationTime: 'notification_time',
+  appLock: 'app_lock',
 } as const;
 
-/** Every setting key, so a backup restores settings and nothing else. */
-export const SETTING_KEYS: readonly string[] = Object.values(KEYS);
+/**
+ * The setting keys a backup carries. The app lock stays on the phone it was set on: restored onto a
+ * phone with no passcode, it would lock the user out.
+ */
+export const SETTING_KEYS: readonly string[] = Object.values(KEYS).filter((key) => key !== KEYS.appLock);
 
 const DEFAULTS = {
   themePreference: 'system' as ThemePreference,
@@ -39,6 +46,7 @@ const DEFAULTS = {
   defaultTenureYears: 20,
   defaultFdCompounding: 'quarterly' as Compounding,
   notificationTime: '19:00',
+  appLock: false,
 };
 
 function isThemePreference(value: string | undefined): value is ThemePreference {
@@ -87,6 +95,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
         defaultTenureYears: numberOr(stored[KEYS.tenure], DEFAULTS.defaultTenureYears),
         defaultFdCompounding: isCompounding(compounding) ? compounding : DEFAULTS.defaultFdCompounding,
         notificationTime: isTime(notificationTime) ? notificationTime : DEFAULTS.notificationTime,
+        appLock: stored[KEYS.appLock] === '1',
         hydrated: true,
       });
     } catch {
@@ -114,6 +123,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   setNotificationTime: (time) => {
     set({ notificationTime: time });
     persist(KEYS.notificationTime, time);
+  },
+  setAppLock: (enabled) => {
+    set({ appLock: enabled });
+    persist(KEYS.appLock, enabled ? '1' : '0');
   },
 }));
 

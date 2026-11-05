@@ -1,10 +1,11 @@
 import Constants from 'expo-constants';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, Switch, View } from 'react-native';
 
 import { LargeTitleHeader } from '../../src/components/Header';
 import { Screen } from '../../src/components/Screen';
 import { NumberField, SegmentedControl, TimeField } from '../../src/components/inputs';
 import { Button, Card, IconGlyph, Label, ListRow } from '../../src/components/primitives';
+import { canLock, unlock } from '../../src/app-lock';
 import { pickBackup, restoreBackup, shareBackup } from '../../src/backup';
 import { resetDatabase } from '../../src/db/client';
 import { BackupError, describeBackup } from '../../src/lib/backup';
@@ -29,6 +30,9 @@ export default function SettingsScreen() {
   const setDefaultFdCompounding = useSettingsStore((s) => s.setDefaultFdCompounding);
   const notificationTime = useSettingsStore((s) => s.notificationTime);
   const setNotificationTime = useSettingsStore((s) => s.setNotificationTime);
+
+  const appLock = useSettingsStore((s) => s.appLock);
+  const setAppLock = useSettingsStore((s) => s.setAppLock);
 
   const loanCount = useLoansStore((s) => s.items.length);
   const refreshLoans = useLoansStore((s) => s.refresh);
@@ -56,6 +60,21 @@ export default function SettingsScreen() {
         },
       ],
     );
+
+  const toggleLock = (next: boolean) => {
+    void (async () => {
+      if (!next) {
+        setAppLock(false);
+        return;
+      }
+      if (!(await canLock())) {
+        Alert.alert('Set up Face ID first', 'Turn on Face ID or a passcode in the iPhone Settings app, then try again.');
+        return;
+      }
+      // Ask once now, so the user knows the lock works before it can shut them out.
+      if (await unlock('Turn on the app lock')) setAppLock(true);
+    })();
+  };
 
   const showError = (title: string, error: unknown) =>
     Alert.alert(title, error instanceof BackupError ? error.message : 'Something went wrong. Try again.');
@@ -119,6 +138,23 @@ export default function SettingsScreen() {
           value={notificationTime}
           onChange={setNotificationTime}
           hint="You get reminders three days before an EMI is due, and one after if it is unpaid."
+        />
+      </Card>
+
+      <Card title="Privacy" padded={false}>
+        <ListRow
+          title="Lock with Face ID"
+          subtitle="Ask for Face ID or your passcode when the app opens"
+          icon="lock-closed-outline"
+          right={
+            <Switch
+              value={appLock}
+              onValueChange={toggleLock}
+              trackColor={{ true: colors.accent }}
+              accessibilityLabel="Lock with Face ID"
+            />
+          }
+          last
         />
       </Card>
 
