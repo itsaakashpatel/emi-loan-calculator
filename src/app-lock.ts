@@ -23,3 +23,24 @@ export async function unlock(reason: string): Promise<boolean> {
     return false;
   }
 }
+
+export type UnlockOutcome = { success: true } | { success: false; retry: boolean };
+
+/**
+ * Like `unlock`, but says whether the failure is worth another try. iOS cancels the prompt when it
+ * is raised while the app is still starting or coming back to the front; that is not the user
+ * saying no, so the caller should ask again. A real cancel, a lockout or a wrong face is final.
+ */
+export async function unlockWithOutcome(reason: string): Promise<UnlockOutcome> {
+  try {
+    const result = await LocalAuthentication.authenticateAsync({
+      promptMessage: reason,
+      fallbackLabel: 'Use passcode',
+      disableDeviceFallback: false,
+    });
+    if (result.success) return { success: true };
+    return { success: false, retry: result.error === 'app_cancel' || result.error === 'system_cancel' };
+  } catch {
+    return { success: false, retry: false };
+  }
+}

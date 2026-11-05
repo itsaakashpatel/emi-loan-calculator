@@ -193,6 +193,18 @@ export default function LoanDetailScreen() {
             label="Still to pay"
             value={money(item.remainingAmount)}
             hint={item.isClosed ? 'Loan closed' : `${result.tenureMonths - item.paidCount} instalments left`}
+            emphasis
+          />
+          <KeyValueRow
+            label="Principal to pay"
+            value={money(Math.max(0, item.remainingAmount - item.interestRemaining))}
+            swatch={colors.principal}
+          />
+          <KeyValueRow
+            label="Interest to pay"
+            value={money(item.interestRemaining)}
+            tone="warning"
+            swatch={colors.interest}
             last
           />
         </View>

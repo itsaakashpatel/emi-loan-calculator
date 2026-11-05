@@ -65,9 +65,9 @@ export default function StepUpEmiScreen() {
         <KeyValueRow label="Interest, flat EMI" value={money(result.flatInterest)} />
         <KeyValueRow label="Interest, step-up EMI" value={money(result.totalInterest)} tone="positive" />
         <KeyValueRow
-          label="Tenure"
+          label="You finish the loan in"
           value={formatTenure(result.months)}
-          hint={`instead of ${formatTenure(result.flatMonths)}`}
+          hint={`a regular EMI takes ${formatTenure(result.flatMonths)}. You save ${formatTenure(result.monthsSaved)}.`}
           emphasis
           last
         />
