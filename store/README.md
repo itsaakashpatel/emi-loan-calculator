@@ -7,8 +7,8 @@ the account is not authenticated on this machine.
 
 | Path | Contents |
 | --- | --- |
-| `metadata/app-info/en-US.json` | App name, subtitle, privacy policy URL |
-| `metadata/version/1.0.0/en-US.json` | Description, keywords, promotional text, support URL |
+| `metadata/app-info/en-US.json`, `hi.json` | App name, subtitle, privacy policy URL, in English and Hindi |
+| `metadata/version/<version>/en-US.json`, `hi.json` | Description, keywords, promotional text, what's new, support URL. Hindi starts at 1.1.0 |
 | `koubou.yaml` | The 6.9 inch composition: device frame, background, caption text |
 | `koubou-6_5.yaml` | The same composition at 6.5 inch, with the caption sizes scaled |
 | `screenshots/raw/` | Plain simulator captures, 1206 x 2622 |
